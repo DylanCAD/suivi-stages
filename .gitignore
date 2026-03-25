@@ -1,0 +1,28 @@
+# ── Dépendances ──
+node_modules/
+
+# ── Variables d'environnement (JAMAIS committer) ──
+.env
+.env.local
+.env.production
+.env.staging
+
+# ── Build / dist ──
+dist/
+build/
+coverage/
+
+# ── Uploads utilisateurs ──
+backend/src/uploads/
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+
+# ── Logs ──
+*.log
+npm-debug.log*
+
+# ── IDE ──
+.vscode/settings.json
+.idea/
