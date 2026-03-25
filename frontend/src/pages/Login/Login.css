@@ -1,0 +1,105 @@
+.login-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1f3e 0%, #1e3a8a 50%, #1a1f3e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-circle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.login-circle-1 {
+  width: 400px; height: 400px;
+  background: rgba(37, 99, 235, 0.15);
+  top: -120px; left: -120px;
+}
+.login-circle-2 {
+  width: 300px; height: 300px;
+  background: rgba(124, 58, 237, 0.1);
+  bottom: -80px; right: -80px;
+}
+
+.login-card {
+  background: white;
+  border-radius: 14px;
+  padding: 36px 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+  position: relative;
+  z-index: 1;
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.login-logo-icon { font-size: 1.8rem; }
+.login-logo-text {
+  font-family: var(--mono);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.login-subtitle {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.login-forgot {
+  font-size: 0.78rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+.login-forgot:hover { text-decoration: underline; }
+
+.login-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* Comptes test (dev uniquement) */
+.login-test-accounts {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+}
+.login-test-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.login-test-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.login-test-grid > div {
+  font-size: 0.7rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.login-test-grid strong { color: var(--text); }

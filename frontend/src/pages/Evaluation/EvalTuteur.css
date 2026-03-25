@@ -1,0 +1,36 @@
+.eval-page {
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 32px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.eval-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.eval-logo {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--nav);
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 6px;
+  color: white;
+  margin-bottom: 8px;
+}
+.eval-header p { color: var(--muted); font-size: 0.85rem; }
+
+.eval-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 28px 32px;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: var(--shadow);
+}

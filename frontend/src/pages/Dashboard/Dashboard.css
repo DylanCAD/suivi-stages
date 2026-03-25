@@ -1,0 +1,20 @@
+/* Le dashboard utilise les styles globaux (index.css)
+   On ajoute juste les styles spécifiques ici */
+
+.dashboard-welcome {
+  background: linear-gradient(135deg, var(--nav) 0%, #1e3a8a 100%);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  color: white;
+  margin-bottom: 24px;
+}
+.dashboard-welcome h2 {
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  color: white;
+  margin-bottom: 4px;
+}
+.dashboard-welcome p {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
