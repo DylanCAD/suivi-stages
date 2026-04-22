@@ -49,10 +49,20 @@ const StageDetail = () => {
     } catch (e) { toast.error(e.response?.data?.message || 'Erreur upload.'); }
   };
 
-  const handleExportPDF = () => {
+ const handleExportPDF = async () => {
+  try {
     const token = localStorage.getItem('accessToken');
-    window.open(`http://localhost:5000/api/export/stage/${id}?token=${token}`, '_blank');
-  };
+    const response = await fetch(`http://localhost:5000/api/export/stage/${id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const html = await response.text();
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
+  } catch {
+    toast.error('Erreur lors de la génération du PDF.');
+  }
+};
 
   const fmt = (d) => d ? new Date(d).toLocaleDateString('fr-FR') : '—';
 
@@ -87,6 +97,22 @@ const StageDetail = () => {
         </div>
       </div>
 
+      {/* ── TIMELINE ── */}
+      <div className="stage-timeline">
+        <div className={`step ${stage.statut === 'en_attente' ? 'active' : ''}`}>
+          🟢 Créé
+        </div>
+        <div className={`step ${stage.statut === 'valide' ? 'active' : ''}`}>
+          🟡 Validé
+        </div>
+        <div className={`step ${stage.statut === 'en_cours' ? 'active' : ''}`}>
+          🔵 En cours
+        </div>
+        <div className={`step ${stage.statut === 'termine' ? 'active' : ''}`}>
+          🟣 Terminé
+        </div>
+      </div>
+
       {stage.statut === 'refuse' && stage.motif_refus && (
         <div className="alert alert-danger" style={{ marginBottom:20 }}>
           ❌ <strong>Stage refusé :</strong> {stage.motif_refus}
@@ -111,7 +137,7 @@ const StageDetail = () => {
         </div>
       )}
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:20 }}>
         <div className="card">
           <div className="card-header"><h3 className="card-title">👤 Étudiant</h3></div>
           <div className="card-body">

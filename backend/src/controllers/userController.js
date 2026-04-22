@@ -145,12 +145,31 @@ const changePassword = async (req, res, next) => {
     const { id_utilisateur } = req.user;
     const { ancien_mot_de_passe, nouveau_mot_de_passe } = req.body;
 
-    const [rows] = await pool.execute('SELECT mot_de_passe FROM utilisateurs WHERE id_utilisateur = ?', [id_utilisateur]);
-    const valid  = await bcrypt.compare(ancien_mot_de_passe, rows[0].mot_de_passe);
-    if (!valid) return res.status(400).json({ message: 'Ancien mot de passe incorrect.' });
+    // Validation du nouveau mot de passe
+    if (!nouveau_mot_de_passe || nouveau_mot_de_passe.length < 12)
+      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 12 caractères.' });
+    if (!/[A-Z]/.test(nouveau_mot_de_passe))
+      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins une majuscule.' });
+    if (!/[a-z]/.test(nouveau_mot_de_passe))
+      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins une minuscule.' });
+    if (!/[0-9]/.test(nouveau_mot_de_passe))
+      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins un chiffre.' });
+    if (!/[^A-Za-z0-9]/.test(nouveau_mot_de_passe))
+      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins un caractère spécial (ex: !@#$).' });
+
+    const [rows] = await pool.execute(
+      'SELECT mot_de_passe FROM utilisateurs WHERE id_utilisateur = ?',
+      [id_utilisateur]
+    );
+    const valid = await bcrypt.compare(ancien_mot_de_passe, rows[0].mot_de_passe);
+    if (!valid)
+      return res.status(400).json({ message: 'Ancien mot de passe incorrect.' });
 
     const hash = await bcrypt.hash(nouveau_mot_de_passe, 12);
-    await pool.execute('UPDATE utilisateurs SET mot_de_passe = ? WHERE id_utilisateur = ?', [hash, id_utilisateur]);
+    await pool.execute(
+      'UPDATE utilisateurs SET mot_de_passe = ? WHERE id_utilisateur = ?',
+      [hash, id_utilisateur]
+    );
     res.json({ message: 'Mot de passe modifié avec succès.' });
 
   } catch (error) { next(error); }

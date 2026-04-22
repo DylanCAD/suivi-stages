@@ -3,6 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { stageAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import Layout from '../../components/Layout/Layout';
+import { User, Briefcase, FileText } from "lucide-react";
+import { motion } from "framer-motion";
 
 const Badge = ({ statut }) => {
   const labels = { en_attente:'En attente', valide:'Validé', refuse:'Refusé', en_cours:'En cours', termine:'Terminé', evalue:'Évalué' };
@@ -79,11 +81,15 @@ const StageList = () => {
         </div>
       </div>
 
-      {/* ── Tableau ── */}
+      {/* ── CONTENT ── */}
       <div className="card">
-        <div className="table-wrapper">
+        <div className="card-body">
           {loading ? (
-            <div className="loading-center"><div className="spinner"></div></div>
+            <div style={{ padding: 20 }}>
+              <div className="skeleton" style={{ width: '60%' }} />
+              <div className="skeleton" style={{ width: '80%' }} />
+              <div className="skeleton" style={{ width: '40%' }} />
+            </div>            
           ) : stages.length === 0 ? (
             <div className="empty-state">
               <div className="icon">📋</div>
@@ -91,41 +97,60 @@ const StageList = () => {
               {user?.role === 'etudiant' && <p><Link to="/stages/nouveau">Déclarez votre premier stage →</Link></p>}
             </div>
           ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Titre</th>
-                  {user?.role !== 'etudiant' && <th>Étudiant</th>}
-                  <th>Entreprise</th>
-                  <th>Date début</th>
-                  <th>Date fin</th>
-                  <th>Statut</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stages.map(s => (
-                  <tr key={s.id_stage}>
-                    <td className="muted mono">#{s.id_stage}</td>
-                    <td style={{ fontWeight: 600, maxWidth: 200 }}>{s.titre}</td>
-                    {user?.role !== 'etudiant' && <td className="muted">{s.etudiant_nom}</td>}
-                    <td className="muted">{s.entreprise_nom || '—'}</td>
-                    <td className="muted">{s.date_debut ? new Date(s.date_debut).toLocaleDateString('fr-FR') : '—'}</td>
-                    <td className="muted">{s.date_fin   ? new Date(s.date_fin).toLocaleDateString('fr-FR')   : '—'}</td>
-                    <td><Badge statut={s.statut} /></td>
-                    <td>
-                      <Link to={`/stages/${s.id_stage}`} className="btn btn-ghost btn-sm">Voir →</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            
+<div className="stage-grid">
+              {stages.map((s) => (
+                <div key={s.id_stage} className="stage-card">
+
+                  {/* HEADER CARD */}
+                  <div className="stage-card-header">
+                    <h3 className="stage-title">
+                      {s.titre}
+                    </h3>
+                    <Badge statut={s.statut} />
+                  </div>
+
+                  {/* ENTREPRISE */}
+                  <div className="stage-company">
+                    <Briefcase size={16} /> {s.entreprise_nom}
+                  </div>
+
+                  {/* DATES */}
+                  <div className="stage-dates">
+                    📅{' '}
+                    {s.date_debut
+                      ? new Date(s.date_debut).toLocaleDateString('fr-FR')
+                      : '—'}{' '}
+                    →{' '}
+                    {s.date_fin
+                      ? new Date(s.date_fin).toLocaleDateString('fr-FR')
+                      : '—'}
+                  </div>
+
+                  {/* ETUDIANT (si pas étudiant) */}
+                  {user?.role !== 'etudiant' && (
+                    <div className="stage-user">
+                      👤 {s.etudiant_nom}
+                    </div>
+                  )}
+
+                  {/* ACTION */}
+                  <Link
+                    to={`/stages/${s.id_stage}`}
+                    className="btn btn-ghost btn-sm"
+                    style={{ marginTop: 10 }}
+                  >
+                    Voir →
+                  </Link>
+
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
-    </Layout>
-  );
+    </Layout>  
+    );
 };
 
 export default StageList;

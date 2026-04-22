@@ -103,3 +103,24 @@
   line-height: 1.4;
 }
 .login-test-grid strong { color: var(--text); }
+
+.login-contact-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+.login-contact-link:hover {
+  text-decoration: underline;
+}
+
+.login-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.login-logo-img {
+  width: 140px;
+  height: auto;
+  border-radius: 5px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}

@@ -6,29 +6,27 @@ import './Sidebar.css';
 const Sidebar = () => {
   const { user } = useAuth();
 
-  // Menus selon le rôle
   const menus = {
     etudiant: [
-      { to: '/dashboard',  icon: '🏠', label: 'Dashboard' },
-      { to: '/stages',     icon: '📋', label: 'Mes stages' },
-      { to: '/documents',  icon: '📁', label: 'Documents' },
-      { to: '/profile',    icon: '👤', label: 'Mon profil' },
+      { to: '/dashboard', label: 'Dashboard' },
+      { to: '/stages',    label: 'Mes stages' },
+      { to: '/documents', label: 'Documents' },
+      { to: '/profile',   label: 'Mon profil' },
     ],
     enseignant: [
-      { to: '/dashboard',  icon: '🏠', label: 'Dashboard' },
-      { to: '/stages',     icon: '📋', label: 'Dossiers' },
-      { to: '/profile',    icon: '👤', label: 'Mon profil' },
+      { to: '/dashboard', label: 'Dashboard' },
+      { to: '/stages',    label: 'Dossiers' },
+      { to: '/profile',   label: 'Mon profil' },
     ],
     tuteur: [
-      { to: '/dashboard',  icon: '🏠', label: 'Dashboard' },
-      { to: '/stages',     icon: '📋', label: 'Mes stagiaires' },
-      { to: '/profile',    icon: '👤', label: 'Mon profil' },
+      { to: '/dashboard', label: 'Dashboard' },
+      { to: '/stages',    label: 'Mes stagiaires' },
+      { to: '/profile',   label: 'Mon profil' },
     ],
     admin: [
-      { to: '/dashboard',  icon: '📊', label: 'Tableau de bord' },
-      { to: '/stages',     icon: '📋', label: 'Tous les stages' },
-      { to: '/admin/users',icon: '👥', label: 'Utilisateurs' },
-      { to: '/admin',      icon: '⚙️', label: 'Administration' },
+      { to: '/dashboard',   label: 'Tableau de bord' },
+      { to: '/stages',      label: 'Tous les stages' },
+      { to: '/admin/users', label: 'Administration' },
     ],
   };
 
@@ -39,12 +37,11 @@ const Sidebar = () => {
       <div className="sidebar-section-label">Navigation</div>
       {links.map(link => (
         <NavLink
-          key={link.to}
+          key={link.to + link.label}
           to={link.to}
           end={link.to === '/dashboard'}
           className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
         >
-          <span className="sidebar-icon">{link.icon}</span>
           <span className="sidebar-label">{link.label}</span>
         </NavLink>
       ))}

@@ -29,7 +29,15 @@ const isEmailValide = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const isSiretValide = (siret) => /^\d{14}$/.test(siret);
 
 // Valide la force d'un mot de passe
-const isMotDePasseValide = (mdp) => mdp.length >= 8;
+const isMotDePasseValide = (mdp) => {
+  return (
+    mdp.length >= 12 &&
+    /[A-Z]/.test(mdp) &&
+    /[a-z]/.test(mdp) &&
+    /[0-9]/.test(mdp) &&
+    /[^A-Za-z0-9]/.test(mdp)
+  );
+};
 
 // Vérifie qu'une date de fin est après la date de début
 const isDatesValides = (debut, fin) => new Date(fin) > new Date(debut);
@@ -106,13 +114,25 @@ describe('🏢 Validation SIRET', () => {
 });
 
 describe('🔒 Validation mot de passe', () => {
-  test('mot de passe valide (8+ caractères)', () => {
+  test('mot de passe valide (12+ caractères, tous critères)', () => {
     expect(isMotDePasseValide('Password123!')).toBe(true);
-    expect(isMotDePasseValide('12345678')).toBe(true);
+    expect(isMotDePasseValide('MonMotDePasse1!')).toBe(true);
   });
-  test('mot de passe trop court', () => {
-    expect(isMotDePasseValide('abc')).toBe(false);
-    expect(isMotDePasseValide('')).toBe(false);
+  test('trop court (moins de 12 caractères)', () => {
+    expect(isMotDePasseValide('Pass1!')).toBe(false);
+    expect(isMotDePasseValide('12345678')).toBe(false);
+  });
+  test('pas de majuscule', () => {
+    expect(isMotDePasseValide('password123!')).toBe(false);
+  });
+  test('pas de minuscule', () => {
+    expect(isMotDePasseValide('PASSWORD123!')).toBe(false);
+  });
+  test('pas de chiffre', () => {
+    expect(isMotDePasseValide('PasswordABCD!')).toBe(false);
+  });
+  test('pas de caractère spécial', () => {
+    expect(isMotDePasseValide('Password12345')).toBe(false);
   });
 });
 

@@ -138,5 +138,14 @@ Projet scolaire — M2-DI
 
 ##
 Teste Unitaire Jest :
+“J’ai mis en place des tests unitaires automatisés avec Jest, exécutés automatiquement à chaque push via un pipeline CI/CD.”
+Tu codes
+   ↓
+Tu push GitHub
+   ↓
+CI (tests automatiques)
+   ↓
+OK → CD (déploiement)
+
 cd C:\suivi-stages\backend
 npm test

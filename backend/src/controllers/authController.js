@@ -183,4 +183,176 @@ const getMe = async (req, res, next) => {
   }
 };
 
-module.exports = { login, refreshToken, logout, getMe };
+
+// ════════════════════════════════════════════════
+// POST /api/auth/forgot-password
+// ════════════════════════════════════════════════
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email obligatoire.' });
+    }
+
+    const [rows] = await pool.execute(
+      'SELECT id_utilisateur, prenom, actif FROM utilisateurs WHERE email = ?',
+      [email.toLowerCase()]
+    );
+
+    if (rows.length > 0 && rows[0].actif) {
+      const user = rows[0];
+
+      const crypto = require('crypto');
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiry = new Date(Date.now() + 60 * 60 * 1000);
+
+      await pool.execute(
+        'UPDATE utilisateurs SET reset_token = ?, reset_token_expiry = ? WHERE id_utilisateur = ?',
+        [resetToken, expiry, user.id_utilisateur]
+      );
+
+      const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+      const { sendResetPasswordEmail } = require('../config/mailer');
+      await sendResetPasswordEmail(email.toLowerCase(), user.prenom, resetUrl);
+    }
+
+    res.json({
+      message: 'Si cet email est enregistré, vous recevrez un lien de réinitialisation.'
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ════════════════════════════════════════════════
+// POST /api/auth/reset-password
+// ════════════════════════════════════════════════
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, nouveau_mot_de_passe } = req.body;
+
+    if (!token || !nouveau_mot_de_passe) {
+      return res.status(400).json({ message: 'Token et nouveau mot de passe obligatoires.' });
+    }
+
+if (nouveau_mot_de_passe.length < 12)
+  return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 12 caractères.' });
+if (!/[A-Z]/.test(nouveau_mot_de_passe))
+  return res.status(400).json({ message: 'Le mot de passe doit contenir au moins une majuscule.' });
+if (!/[a-z]/.test(nouveau_mot_de_passe))
+  return res.status(400).json({ message: 'Le mot de passe doit contenir au moins une minuscule.' });
+if (!/[0-9]/.test(nouveau_mot_de_passe))
+  return res.status(400).json({ message: 'Le mot de passe doit contenir au moins un chiffre.' });
+if (!/[^A-Za-z0-9]/.test(nouveau_mot_de_passe))
+  return res.status(400).json({ message: 'Le mot de passe doit contenir au moins un caractère spécial (ex: !@#$).' });
+
+    const [rows] = await pool.execute(
+      'SELECT id_utilisateur FROM utilisateurs WHERE reset_token = ? AND reset_token_expiry > NOW()',
+      [token]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({ message: 'Lien invalide ou expiré. Faites une nouvelle demande.' });
+    }
+
+    const userId = rows[0].id_utilisateur;
+
+    const hash = await bcrypt.hash(nouveau_mot_de_passe, 12);
+
+    await pool.execute(
+      'UPDATE utilisateurs SET mot_de_passe = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id_utilisateur = ?',
+      [hash, userId]
+    );
+
+    res.json({ message: 'Mot de passe modifié avec succès. Vous pouvez vous connecter.' });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ════════════════════════════════════════════════
+// POST /api/auth/contact-admin
+// Envoie un email à l'admin depuis la page login
+// ════════════════════════════════════════════════
+const contactAdmin = async (req, res, next) => {
+  try {
+    const { nom, email, message } = req.body;
+
+    if (!nom?.trim() || !email?.trim() || !message?.trim()) {
+      return res.status(400).json({ message: 'Tous les champs sont obligatoires.' });
+    }
+
+    // Validation email basique
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ message: 'Adresse email invalide.' });
+    }
+
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminEmail) {
+      return res.status(500).json({ message: 'Configuration admin manquante.' });
+    }
+
+    const { transporter } = require('../config/mailer');
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="fr">
+      <head><meta charset="UTF-8"></head>
+      <body style="font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4ff; margin: 0; padding: 32px 16px;">
+        <div style="max-width: 520px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+          <div style="background: #1a1f3e; padding: 28px 32px; text-align: center;">
+            <span style="font-family: monospace; font-size: 1.1rem; font-weight: 700; color: white; background: #2563eb; padding: 6px 14px; border-radius: 6px;">
+              StageTrack
+            </span>
+          </div>
+          <div style="padding: 32px;">
+            <h2 style="font-size: 1rem; color: #0f172a; margin: 0 0 20px; font-family: monospace;">
+              Nouvelle demande de premier accès
+            </h2>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+              <tr>
+                <td style="padding: 10px 0; color: #64748b; width: 100px; vertical-align: top;">Nom</td>
+                <td style="padding: 10px 0; color: #0f172a; font-weight: 600;">${nom}</td>
+              </tr>
+              <tr style="border-top: 1px solid #f1f5f9;">
+                <td style="padding: 10px 0; color: #64748b; vertical-align: top;">Email</td>
+                <td style="padding: 10px 0;">
+                  <a href="mailto:${email}" style="color: #2563eb;">${email}</a>
+                </td>
+              </tr>
+              <tr style="border-top: 1px solid #f1f5f9;">
+                <td style="padding: 10px 0; color: #64748b; vertical-align: top;">Message</td>
+                <td style="padding: 10px 0; color: #0f172a; line-height: 1.6;">${message.replace(/\n/g, '<br>')}</td>
+              </tr>
+            </table>
+            <div style="margin-top: 24px; padding: 14px 16px; background: #dbeafe; border-radius: 8px; font-size: 0.8rem; color: #1e40af;">
+              Répondez directement à cet email ou créez un compte pour cette personne via l'interface d'administration.
+            </div>
+          </div>
+          <div style="border-top: 1px solid #e2e8f0; padding: 16px 32px; background: #f8fafc; text-align: center;">
+            <p style="margin: 0; font-size: 0.72rem; color: #94a3b8;">StageTrack — Application de suivi des stages</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    await transporter.sendMail({
+      from:     process.env.SMTP_FROM,
+      to:       adminEmail,
+      replyTo:  email,          // Répondre directement à l'utilisateur
+      subject:  `Demande de premier accès — ${nom}`,
+      html,
+    });
+
+    res.json({ message: 'Votre message a été envoyé. L\'administrateur vous contactera.' });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { login, refreshToken, logout, getMe, forgotPassword, resetPassword, contactAdmin };
