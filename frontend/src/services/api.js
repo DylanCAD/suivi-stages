@@ -19,24 +19,27 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config;
 
-    // Si token expiré (401) et pas déjà en train de retry
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) throw new Error('Pas de refresh token');
 
-        const { data } = await axios.post('http://localhost:5000/api/auth/refresh', { refreshToken });
+        const { data } = await axios.post(
+          'http://localhost:5000/api/auth/refresh',
+          { refreshToken }
+        );
+
         localStorage.setItem('accessToken', data.accessToken);
         original.headers.Authorization = `Bearer ${data.accessToken}`;
-        return api(original); // Relance la requête originale
+        return api(original);
 
       } catch {
-        // Refresh échoué → déconnexion
         localStorage.clear();
         window.location.href = '/login';
       }
     }
+
     return Promise.reject(error);
   }
 );
@@ -45,10 +48,18 @@ api.interceptors.response.use(
 // AUTH
 // ════════════════════════════════════════════════
 export const authAPI = {
-  login:   (data)  => api.post('/auth/login', data),
-  logout:  ()      => api.post('/auth/logout'),
-  getMe:   ()      => api.get('/auth/me'),
-  refresh: (token) => api.post('/auth/refresh', { refreshToken: token }),
+  login:           (data)  => api.post('/auth/login', data),
+  logout:          ()      => api.post('/auth/logout'),
+  getMe:           ()      => api.get('/auth/me'),
+  refresh:         (token) => api.post('/auth/refresh', { refreshToken: token }),
+
+  // 🔐 MOT DE PASSE OUBLIÉ
+  forgotPassword:  (email) => api.post('/auth/forgot-password', { email }),
+
+  // 🔐 RESET MOT DE PASSE
+  resetPassword:   (data)  => api.post('/auth/reset-password', data),
+
+  contactAdmin: (data) => api.post('/auth/contact-admin', data),
 };
 
 // ════════════════════════════════════════════════
@@ -67,32 +78,33 @@ export const stageAPI = {
 // DOCUMENTS
 // ════════════════════════════════════════════════
 export const documentAPI = {
-  getByStage: (idStage)        => api.get(`/stages/${idStage}/documents`),
-  upload:     (idStage, formData) => api.post(`/stages/${idStage}/documents`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  download:   (id)             => api.get(`/documents/${id}/download`, { responseType: 'blob' }),
-  delete:     (id)             => api.delete(`/documents/${id}`),
+  getByStage: (idStage) => api.get(`/stages/${idStage}/documents`),
+  upload: (idStage, formData) =>
+    api.post(`/stages/${idStage}/documents`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  download: (id) => api.get(`/documents/${id}/download`, { responseType: 'blob' }),
+  delete: (id) => api.delete(`/documents/${id}`),
 };
 
 // ════════════════════════════════════════════════
 // UTILISATEURS
 // ════════════════════════════════════════════════
 export const userAPI = {
-  getAll:         (params) => api.get('/users', { params }),
-  create:         (data)   => api.post('/users', data),
-  toggle:         (id)     => api.patch(`/users/${id}/toggle`),
-  updateProfile:  (data)   => api.put('/users/me', data),
-  changePassword: (data)   => api.put('/users/me/password', data),
+  getAll: (params) => api.get('/users', { params }),
+  create: (data) => api.post('/users', data),
+  toggle: (id) => api.patch(`/users/${id}/toggle`),
+  updateProfile: (data) => api.put('/users/me', data),
+  changePassword: (data) => api.put('/users/me/password', data),
 };
 
 // ════════════════════════════════════════════════
 // NOTIFICATIONS
 // ════════════════════════════════════════════════
 export const notifAPI = {
-  getAll:       (params) => api.get('/notifications', { params }),
-  marquerLue:   (id)     => api.patch(`/notifications/${id}/lire`),
-  marquerTout:  ()       => api.patch('/notifications/lire-tout'),
+  getAll: (params) => api.get('/notifications', { params }),
+  marquerLue: (id) => api.patch(`/notifications/${id}/lire`),
+  marquerTout: () => api.patch('/notifications/lire-tout'),
 };
 
 export default api;

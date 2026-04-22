@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { stageAPI } from '../../services/api';
 import Layout from '../../components/Layout/Layout';
+import { motion } from 'framer-motion';
 
 const STEPS = ['Infos stage', 'Entreprise', 'Récapitulatif'];
 
@@ -75,6 +76,15 @@ const StageForm = () => {
 
       {/* ── Stepper ── */}
       <div className="stepper" style={{ marginBottom: 32 }}>
+        <div className="progress-bar" style={{ marginBottom: 20 }}>
+          <div
+            className="progress-fill"
+            style={{
+              width: `${((step + 1) / STEPS.length) * 100}%`,
+              background: 'var(--accent)'
+            }}
+          />
+        </div>
         {STEPS.map((label, i) => (
           <div key={i} className={`stepper-step ${i < step ? 'done' : i === step ? 'active' : ''}`}>
             <div className="stepper-circle">{i < step ? '✓' : i + 1}</div>

@@ -70,7 +70,10 @@ const Profile = () => {
       {/* ── Carte identité ── */}
       <div className="profile-hero">
         <div className="profile-avatar">
-          {user?.prenom?.[0]}{user?.nom?.[0]}
+          <img
+            src={`https://ui-avatars.com/api/?name=${user?.prenom}+${user?.nom}`}
+            alt="avatar"
+          />
         </div>
         <div className="profile-hero-info">
           <h2 className="profile-name">{user?.prenom} {user?.nom}</h2>
@@ -152,24 +155,33 @@ const Profile = () => {
           <div className="card-header"><h3 className="card-title">Changer le mot de passe</h3></div>
           <div className="card-body">
             <div className="alert alert-info" style={{ marginBottom: 20 }}>
-              🔒 Le mot de passe doit contenir au moins 8 caractères.
+              Le mot de passe doit contenir au moins 12 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.
             </div>
             <form onSubmit={submitPwd(onSavePassword)}>
               <div className="form-group" style={{ marginBottom: 16 }}>
                 <label className="form-label">Ancien mot de passe <span className="req">*</span></label>
                 <input type="password" className={`form-control ${errPwd.ancien ? 'error' : ''}`}
                   {...regPwd('ancien', { required: 'Obligatoire.' })} />
-                {errPwd.ancien && <span className="form-error">⚠ {errPwd.ancien.message}</span>}
+                {errPwd.ancien && <span className="form-error">{errPwd.ancien.message}</span>}
               </div>
+
               <div className="form-group" style={{ marginBottom: 16 }}>
                 <label className="form-label">Nouveau mot de passe <span className="req">*</span></label>
                 <input type="password" className={`form-control ${errPwd.nouveau ? 'error' : ''}`}
                   {...regPwd('nouveau', {
                     required: 'Obligatoire.',
-                    minLength: { value: 8, message: '8 caractères minimum.' }
-                  })} />
-                {errPwd.nouveau && <span className="form-error">⚠ {errPwd.nouveau.message}</span>}
+                    minLength: { value: 12, message: '12 caractères minimum.' },
+                    validate: {
+                      hasUpper:   v => /[A-Z]/.test(v)        || 'Au moins une majuscule requise.',
+                      hasLower:   v => /[a-z]/.test(v)        || 'Au moins une minuscule requise.',
+                      hasNumber:  v => /[0-9]/.test(v)        || 'Au moins un chiffre requis.',
+                      hasSpecial: v => /[^A-Za-z0-9]/.test(v) || 'Au moins un caractère spécial requis (ex: !@#$).',
+                    }
+                  })}
+                />
+                {errPwd.nouveau && <span className="form-error">{errPwd.nouveau.message}</span>}
               </div>
+
               <div className="form-group" style={{ marginBottom: 24 }}>
                 <label className="form-label">Confirmer le nouveau mot de passe <span className="req">*</span></label>
                 <input type="password" className={`form-control ${errPwd.confirm ? 'error' : ''}`}
@@ -177,10 +189,11 @@ const Profile = () => {
                     required: 'Obligatoire.',
                     validate: v => v === watchPwd('nouveau') || 'Les mots de passe ne correspondent pas.'
                   })} />
-                {errPwd.confirm && <span className="form-error">⚠ {errPwd.confirm.message}</span>}
+                {errPwd.confirm && <span className="form-error">{errPwd.confirm.message}</span>}
               </div>
+
               <button type="submit" className="btn btn-primary" disabled={saving}>
-                {saving ? '⏳ Modification…' : '🔒 Changer le mot de passe'}
+                {saving ? 'Modification…' : 'Changer le mot de passe'}
               </button>
             </form>
           </div>

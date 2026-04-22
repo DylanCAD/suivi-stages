@@ -9,21 +9,23 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 12px rgba(241, 212, 212, 0.2);
 }
 
 .navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.navbar-logo-text {
   font-family: var(--mono);
   font-size: 0.95rem;
   font-weight: 700;
   color: white;
-  background: var(--accent);
-  padding: 4px 12px;
-  border-radius: 6px;
-  text-decoration: none;
-  flex-shrink: 0;
-  letter-spacing: 0.5px;
 }
+
 
 .navbar-links {
   display: flex;
@@ -200,3 +202,49 @@
 .user-dd-item.danger { color: var(--danger); }
 .user-dd-item.danger:hover { background: #fff5f5; }
 .user-dd-sep { height: 1px; background: var(--border); }
+
+.navbar-logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+
+  border-radius: 10px;         
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.05);
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.navbar-logo-img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+  .navbar-links {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar-links {
+    display: none;
+  }
+
+  .navbar-logo-text {
+    display: none;
+  }
+
+  .navbar-logo-img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .user-info {
+    display: none;
+  }
+
+  .user-btn {
+    padding: 5px;
+  }
+}

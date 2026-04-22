@@ -7,7 +7,7 @@ import './index.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // ── Pages ──
-import Login     from './pages/Login/Login';
+import Login from './pages/Login/Login';
 import Dashboard from './pages/Dashboard/Dashboard';
 import StageList from './pages/Stages/StageList';
 import StageDetail from './pages/Stages/StageDetail';
@@ -17,7 +17,13 @@ import Evaluation from './pages/Evaluation/Evaluation';
 import EvalTuteur from './pages/Evaluation/EvalTuteur';
 import AdminUsers from './pages/Admin/AdminUsers';
 
-// ── Garde de route : redirige vers /login si non connecté ──
+// 🔐 MOT DE PASSE OUBLIÉ
+import ForgotPassword from './pages/Login/ForgotPassword';
+import ResetPassword from './pages/Login/ResetPassword';
+
+import ContactAdmin   from './pages/Login/ContactAdmin';
+
+// ── Garde de route : privé ──
 const PrivateRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
 
@@ -36,7 +42,7 @@ const PrivateRoute = ({ children, roles }) => {
   return children;
 };
 
-// ── Redirige vers /dashboard si déjà connecté ──
+// ── Route publique ──
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
@@ -46,54 +52,126 @@ const PublicRoute = ({ children }) => {
 
 const AppRoutes = () => (
   <Routes>
-    {/* Route publique : login */}
-    <Route path="/login" element={
-      <PublicRoute><Login /></PublicRoute>
-    }/>
 
-    {/* Formulaire tuteur - accessible sans connexion via token */}
-    <Route path="/eval/:id_stage/:token" element={
-      <EvalTuteur/>
-    }/>
+    {/* LOGIN */}
+    <Route
+      path="/login"
+      element={
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      }
+    />
 
-    {/* Route par défaut */}
+    {/* 🔐 MOT DE PASSE OUBLIÉ */}
+    <Route
+      path="/forgot-password"
+      element={
+        <PublicRoute>
+          <ForgotPassword />
+        </PublicRoute>
+      }
+    />
+
+    {/* 🔐 RESET MOT DE PASSE */}
+    <Route
+      path="/reset-password/:token"
+      element={
+        <PublicRoute>
+          <ResetPassword />
+        </PublicRoute>
+      }
+    />
+
+    {/* Formulaire tuteur (public avec token) */}
+    <Route path="/eval/:id_stage/:token" element={<EvalTuteur />} />
+
+    {/* HOME */}
     <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-    {/* Routes privées */}
-    <Route path="/dashboard" element={
-      <PrivateRoute><Dashboard /></PrivateRoute>
-    }/>
+    {/* DASHBOARD */}
+    <Route
+      path="/dashboard"
+      element={
+        <PrivateRoute>
+          <Dashboard />
+        </PrivateRoute>
+      }
+    />
 
-    <Route path="/stages" element={
-      <PrivateRoute><StageList /></PrivateRoute>
-    }/>
+    {/* STAGES */}
+    <Route
+      path="/stages"
+      element={
+        <PrivateRoute>
+          <StageList />
+        </PrivateRoute>
+      }
+    />
 
-    <Route path="/stages/nouveau" element={
-      <PrivateRoute roles={['etudiant']}><StageForm /></PrivateRoute>
-    }/>
+    <Route
+      path="/stages/nouveau"
+      element={
+        <PrivateRoute roles={['etudiant']}>
+          <StageForm />
+        </PrivateRoute>
+      }
+    />
 
-    <Route path="/stages/:id" element={
-      <PrivateRoute><StageDetail /></PrivateRoute>
-    }/>
+    <Route
+      path="/stages/:id"
+      element={
+        <PrivateRoute>
+          <StageDetail />
+        </PrivateRoute>
+      }
+    />
 
-    <Route path="/stages/:id/modifier" element={
-      <PrivateRoute roles={['etudiant']}><StageForm /></PrivateRoute>
-    }/>
+    <Route
+      path="/stages/:id/modifier"
+      element={
+        <PrivateRoute roles={['etudiant']}>
+          <StageForm />
+        </PrivateRoute>
+      }
+    />
 
-    <Route path="/stages/:id/evaluer" element={
-      <PrivateRoute roles={['enseignant', 'admin']}><Evaluation /></PrivateRoute>
-    }/>
+    <Route
+      path="/stages/:id/evaluer"
+      element={
+        <PrivateRoute roles={['enseignant', 'admin']}>
+          <Evaluation />
+        </PrivateRoute>
+      }
+    />
 
-    <Route path="/profile" element={
-      <PrivateRoute><Profile /></PrivateRoute>
-    }/>
+    {/* PROFILE */}
+    <Route
+      path="/profile"
+      element={
+        <PrivateRoute>
+          <Profile />
+        </PrivateRoute>
+      }
+    />
 
-    <Route path="/admin/users" element={
-      <PrivateRoute roles={['admin']}><AdminUsers /></PrivateRoute>
-    }/>
+    {/* ADMIN */}
+    <Route
+      path="/admin/users"
+      element={
+        <PrivateRoute roles={['admin']}>
+          <AdminUsers />
+        </PrivateRoute>
+      }
+    />
 
-    {/* Fallback */}
+    {/* FALLBACK */}
     <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+    <Route path="/contact-admin" element={
+        <PublicRoute><ContactAdmin /></PublicRoute>
+    }/>
+
   </Routes>
 );
 

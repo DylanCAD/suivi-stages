@@ -4,6 +4,16 @@ import { Bell, LogOut, User, ChevronDown, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { notifAPI } from '../../services/api';
 import './Navbar.css';
+import logo from '../../assets/logo.png';
+
+const Logo = () => (
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="StageTrack">
+    <rect width="32" height="32" rx="8" fill="#2563eb"/>
+    <path d="M8 22 L16 10 L24 22" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    <path d="M11 18 L21 18" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+    <circle cx="16" cy="10" r="2" fill="white"/>
+  </svg>
+);
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -15,7 +25,6 @@ const Navbar = () => {
   const notifRef = useRef(null);
   const userRef  = useRef(null);
 
-  // Charge les notifications
   useEffect(() => {
     const load = async () => {
       try {
@@ -25,11 +34,10 @@ const Navbar = () => {
       } catch {}
     };
     load();
-    const interval = setInterval(load, 30000); // Rafraîchit toutes les 30s
+    const interval = setInterval(load, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // Ferme les dropdowns si clic extérieur
   useEffect(() => {
     const handleClick = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifs(false);
@@ -51,37 +59,33 @@ const Navbar = () => {
   };
 
   const roleLabel = {
-    etudiant:   '🎓 Étudiant',
-    enseignant: '👨‍🏫 Enseignant',
-    tuteur:     '🏢 Tuteur',
-    admin:      '⚙️ Admin',
+    etudiant:   'Étudiant',
+    enseignant: 'Enseignant',
+    tuteur:     'Tuteur',
+    admin:      'Admin',
   };
 
   return (
     <nav className="navbar">
-      {/* ── Logo ── */}
-      <Link to="/" className="navbar-logo">
-        StageTrack
+      <Link to="/" className="navbar-logo" aria-label="Accueil StageTrack">
+        <img src={logo} alt="Logo" className="navbar-logo-img" />
+        <span className="navbar-logo-text">StageTrack</span>
       </Link>
 
-      {/* ── Navigation centrale ── */}
       <div className="navbar-links">
-        <Link to="/dashboard" className="nav-link">📊 Dashboard</Link>
-        <Link to="/stages"    className="nav-link">📋 Stages</Link>
+        <Link to="/dashboard" className="nav-link">Dashboard</Link>
+        <Link to="/stages"    className="nav-link">Stages</Link>
         {user?.role === 'etudiant' && (
-          <Link to="/documents" className="nav-link">📁 Documents</Link>
+          <Link to="/documents" className="nav-link">Documents</Link>
         )}
-        {(user?.role === 'admin') && (
-          <Link to="/admin" className="nav-link">⚙️ Administration</Link>
+        {user?.role === 'admin' && (
+          <Link to="/admin/users" className="nav-link">Administration</Link>
         )}
       </div>
 
-      {/* ── Zone droite ── */}
       <div className="navbar-right">
-
-        {/* Cloche notifications */}
         <div className="notif-wrapper" ref={notifRef}>
-          <button className="icon-btn" onClick={() => setShowNotifs(v => !v)}>
+          <button className="icon-btn" onClick={() => setShowNotifs(v => !v)} aria-label="Notifications">
             <Bell size={18} />
             {nbNonLues > 0 && <span className="notif-badge">{nbNonLues}</span>}
           </button>
@@ -94,11 +98,11 @@ const Navbar = () => {
                   <button onClick={async () => {
                     await notifAPI.marquerTout();
                     setNotifs([]); setNbNonLues(0);
-                  }} className="notif-clear">Tout lire</button>
+                  }} className="notif-clear">Tout marquer lu</button>
                 )}
               </div>
               {notifs.length === 0 ? (
-                <div className="notif-empty">✅ Aucune nouvelle notification</div>
+                <div className="notif-empty">Aucune nouvelle notification</div>
               ) : (
                 notifs.map(n => (
                   <div key={n.id_notification} className="notif-item">
@@ -109,7 +113,7 @@ const Navbar = () => {
                         {new Date(n.date_envoi).toLocaleDateString('fr-FR')}
                       </div>
                     </div>
-                    <button className="notif-read-btn" onClick={() => marquerLue(n.id_notification)}>
+                    <button className="notif-read-btn" onClick={() => marquerLue(n.id_notification)} aria-label="Marquer comme lue">
                       <Check size={12} />
                     </button>
                   </div>
@@ -119,7 +123,6 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Menu utilisateur */}
         <div className="user-wrapper" ref={userRef}>
           <button className="user-btn" onClick={() => setShowUser(v => !v)}>
             <div className="avatar">
