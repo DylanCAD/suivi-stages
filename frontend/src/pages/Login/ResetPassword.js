@@ -4,6 +4,8 @@ import { authAPI } from '../../services/api';
 import './Login.css';
 import logo from '../../assets/logo2.png';
 
+import usePasswordToggle from '../../hooks/usePasswordToggle';
+
 const ResetPassword = () => {
   const { token }   = useParams();
   const navigate    = useNavigate();
@@ -11,6 +13,9 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
   const [success, setSuccess] = useState(false);
+
+  const [pwdType,     PwdToggle]     = usePasswordToggle();
+  const [confirmType, ConfirmToggle] = usePasswordToggle();
 
   const validate = () => {
     if (form.nouveau.length < 12)
@@ -94,14 +99,18 @@ const ResetPassword = () => {
             <form onSubmit={handleSubmit} noValidate>
               <div className="form-group" style={{ marginBottom: 14 }}>
                 <label className="form-label">Nouveau mot de passe</label>
+                <div style={{ position: 'relative' }}>
                 <input
-                  type="password"
+                  type={pwdType}
                   className="form-control"
                   placeholder="••••••••••••"
                   value={form.nouveau}
                   onChange={e => setForm(f => ({ ...f, nouveau: e.target.value }))}
                   autoFocus
                 />
+                  <PwdToggle />
+                </div>
+
                 {form.nouveau && (
                   <div style={{ marginTop: 8 }}>
                     <div style={{ display: 'flex', gap: 3, marginBottom: 4 }}>
@@ -125,13 +134,17 @@ const ResetPassword = () => {
  
               <div className="form-group" style={{ marginBottom: 24 }}>
                 <label className="form-label">Confirmer le mot de passe</label>
+                <div style={{ position: 'relative' }}>
                 <input
-                  type="password"
+                  type={confirmType}
                   className="form-control"
                   placeholder="••••••••••••"
+                  style={{ paddingRight: 40 }}
                   value={form.confirm}
                   onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))}
                 />
+                <ConfirmToggle />
+                </div>
                 {form.confirm && form.nouveau !== form.confirm && (
                   <span className="form-error">Les mots de passe ne correspondent pas.</span>
                 )}

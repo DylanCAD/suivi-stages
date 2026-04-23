@@ -3,6 +3,9 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 import { userAPI } from '../../services/api';
+
+import usePasswordToggle from '../../hooks/usePasswordToggle';
+
 import Layout from '../../components/Layout/Layout';
 import './Profile.css';
 
@@ -10,6 +13,10 @@ const Profile = () => {
   const { user } = useAuth();
   const [tab, setTab] = useState('infos'); // 'infos' | 'password'
   const [saving, setSaving] = useState(false);
+
+  const [ancienType,  AncienToggle]  = usePasswordToggle();
+  const [nouveauType, NouveauToggle] = usePasswordToggle();
+  const [confirmType, ConfirmToggle] = usePasswordToggle();
 
   // ── Formulaire infos ──
   const { register: regInfo, handleSubmit: submitInfo, formState: { errors: errInfo } } = useForm({
@@ -158,37 +165,60 @@ const Profile = () => {
               Le mot de passe doit contenir au moins 12 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.
             </div>
             <form onSubmit={submitPwd(onSavePassword)}>
+                {/* Ancien mot de passe */}
               <div className="form-group" style={{ marginBottom: 16 }}>
                 <label className="form-label">Ancien mot de passe <span className="req">*</span></label>
-                <input type="password" className={`form-control ${errPwd.ancien ? 'error' : ''}`}
-                  {...regPwd('ancien', { required: 'Obligatoire.' })} />
+                <div style={{ position: 'relative' }}>
+                <input
+                    type={ancienType}
+                    className={`form-control ${errPwd.ancien ? 'error' : ''}`}
+                    style={{ paddingRight: 40 }}
+                    {...regPwd('ancien', { required: 'Obligatoire.' })}
+                  />
+                  <AncienToggle />
+                </div>
                 {errPwd.ancien && <span className="form-error">{errPwd.ancien.message}</span>}
               </div>
-
+ 
+              {/* Nouveau mot de passe */}
               <div className="form-group" style={{ marginBottom: 16 }}>
                 <label className="form-label">Nouveau mot de passe <span className="req">*</span></label>
-                <input type="password" className={`form-control ${errPwd.nouveau ? 'error' : ''}`}
-                  {...regPwd('nouveau', {
-                    required: 'Obligatoire.',
-                    minLength: { value: 12, message: '12 caractères minimum.' },
-                    validate: {
-                      hasUpper:   v => /[A-Z]/.test(v)        || 'Au moins une majuscule requise.',
-                      hasLower:   v => /[a-z]/.test(v)        || 'Au moins une minuscule requise.',
-                      hasNumber:  v => /[0-9]/.test(v)        || 'Au moins un chiffre requis.',
-                      hasSpecial: v => /[^A-Za-z0-9]/.test(v) || 'Au moins un caractère spécial requis (ex: !@#$).',
-                    }
-                  })}
-                />
+                <div style={{ position: 'relative' }}>
+                <input
+                    type={nouveauType}
+                    className={`form-control ${errPwd.nouveau ? 'error' : ''}`}
+                    style={{ paddingRight: 40 }}
+                    {...regPwd('nouveau', {
+                      required: 'Obligatoire.',
+                      minLength: { value: 12, message: '12 caractères minimum.' },
+                      validate: {
+                        hasUpper:   v => /[A-Z]/.test(v)        || 'Au moins une majuscule requise.',
+                        hasLower:   v => /[a-z]/.test(v)        || 'Au moins une minuscule requise.',
+                        hasNumber:  v => /[0-9]/.test(v)        || 'Au moins un chiffre requis.',
+                        hasSpecial: v => /[^A-Za-z0-9]/.test(v) || 'Au moins un caractère spécial (ex: !@#$).',
+                      }
+                    })}
+                  />
+                  <NouveauToggle />
+                </div>
                 {errPwd.nouveau && <span className="form-error">{errPwd.nouveau.message}</span>}
               </div>
-
+              
+              {/* Confirmation */}
               <div className="form-group" style={{ marginBottom: 24 }}>
                 <label className="form-label">Confirmer le nouveau mot de passe <span className="req">*</span></label>
-                <input type="password" className={`form-control ${errPwd.confirm ? 'error' : ''}`}
-                  {...regPwd('confirm', {
-                    required: 'Obligatoire.',
-                    validate: v => v === watchPwd('nouveau') || 'Les mots de passe ne correspondent pas.'
-                  })} />
+                  <div style={{ position: 'relative' }}>
+                  <input
+                    type={confirmType}
+                    className={`form-control ${errPwd.confirm ? 'error' : ''}`}
+                    style={{ paddingRight: 40 }}
+                    {...regPwd('confirm', {
+                      required: 'Obligatoire.',
+                      validate: v => v === watchPwd('nouveau') || 'Les mots de passe ne correspondent pas.'
+                    })}
+                  />
+                  <ConfirmToggle />
+                </div>
                 {errPwd.confirm && <span className="form-error">{errPwd.confirm.message}</span>}
               </div>
 

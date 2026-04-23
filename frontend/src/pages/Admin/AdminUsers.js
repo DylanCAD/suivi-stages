@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { userAPI } from '../../services/api';
+
+import usePasswordToggle from '../../hooks/usePasswordToggle';
+
 import Layout from '../../components/Layout/Layout';
 
 const AdminUsers = () => {
@@ -15,6 +18,8 @@ const AdminUsers = () => {
     role: 'etudiant', formation: '', departement: ''
   });
 
+    const [pwdType, PwdToggle] = usePasswordToggle();
+
   const load = async () => {
     setLoading(true);
     try {
@@ -23,7 +28,7 @@ const AdminUsers = () => {
     } catch {} finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); }, [role]);
+  React.useEffect(() => { load(); }, [role]);
 
 const validateForm = () => {
   const errs = {};
@@ -129,12 +134,16 @@ const validateForm = () => {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Mot de passe <span className="req">*</span></label>
-                  <input
-                    type="password"
-                    className={`form-control ${formErrors.mot_de_passe ? 'error' : ''}`}
-                    value={form.mot_de_passe}
-                    onChange={e => setForm(f => ({ ...f, mot_de_passe: e.target.value }))}
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={pwdType}
+                      className={`form-control ${formErrors.mot_de_passe ? 'error' : ''}`}
+                      style={{ paddingRight: 40 }}
+                      value={form.mot_de_passe}
+                      onChange={e => setForm(f => ({ ...f, mot_de_passe: e.target.value }))}
+                    />
+                    <PwdToggle />
+                  </div>
                   {formErrors.mot_de_passe
                     ? <span className="form-error">{formErrors.mot_de_passe}</span>
                     : <span className="form-hint">Minimum 12 caractères, avec majuscule, minuscule, chiffre et caractère spécial.</span>}
