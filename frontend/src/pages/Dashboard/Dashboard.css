@@ -18,3 +18,25 @@
   color: #94a3b8;
   font-size: 0.85rem;
 }
+
+.stat-val {
+  font-family: var(--mono);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text); /* ← était probablement une couleur fixe */
+}
+
+.stat-lbl {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.stat-icon {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  font-size: 1.5rem;
+  opacity: 0.8;
+}
