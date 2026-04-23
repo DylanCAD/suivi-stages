@@ -7,11 +7,14 @@ import logo from '../../assets/logo2.png';
 
 import { Link } from 'react-router-dom';
 
+import usePasswordToggle from '../../hooks/usePasswordToggle';
+
 const Login = () => {
   const { login }  = useAuth();
   const navigate   = useNavigate();
   const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
+  const [pwdType, PwdToggle]  = usePasswordToggle();
 
   const { register, handleSubmit, formState: { errors } } = useForm();
 
@@ -62,12 +65,16 @@ const Login = () => {
 
           <div className="form-group" style={{ marginBottom: 8 }}>
             <label className="form-label">Mot de passe</label>
+            <div style={{ position: 'relative' }}>
             <input
-              type="password"
+              type={pwdType}
               className={`form-control ${errors.mot_de_passe ? 'error' : ''}`}
               placeholder="••••••••"
+              style={{ paddingRight: 40 }}
               {...register('mot_de_passe', { required: 'Mot de passe obligatoire.' })}
             />
+              <PwdToggle />
+            </div>
             {errors.mot_de_passe && <span className="form-error">{errors.mot_de_passe.message}</span>}
           </div>
 

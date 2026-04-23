@@ -149,3 +149,21 @@ OK → CD (déploiement)
 
 cd C:\suivi-stages\backend
 npm test
+
+Push les modifications
+Tu es sur main donc tu dois passer par une branche. 
+Voici les étapes :
+1. Crée une branche pour tes modifications :
+git checkout -b feat/modifications1
+2. Vérifie ce que tu as modifié :
+git status
+3. Ajoute tous les fichiers modifiés :
+git add .
+4. Fais le commit :
+git commit -m "feat: modifications et mise à jour tests"
+5. Pousse la branche :
+git push origin feat/modifications1
+6. Va sur github.com/DylanCAD/suivi-stages → clique sur "Compare & pull request" → "Create pull request" → attends que la CI passe au vert ✅ → "Merge pull request"
+7. Reviens sur main en local :
+git checkout main
+git pull origin main
