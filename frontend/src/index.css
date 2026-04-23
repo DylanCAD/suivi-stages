@@ -401,3 +401,8 @@ body.dark .user-dd-item {
 body.dark .user-dd-item:hover {
   background: #334155;
 }
+
+body.dark .stat-card {
+  background: #1e293b;
+  border-color: #334155;
+}
