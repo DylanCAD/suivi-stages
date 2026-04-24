@@ -1,57 +1,72 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { userAPI } from '../../services/api';
-
 import usePasswordToggle from '../../hooks/usePasswordToggle';
-
 import Layout from '../../components/Layout/Layout';
+import { Search, SlidersHorizontal } from 'lucide-react';
+
+const ROLES = [
+  { value: '',            label: 'Tous'        },
+  { value: 'etudiant',   label: 'Étudiants'   },
+  { value: 'enseignant', label: 'Enseignants' },
+  { value: 'tuteur',     label: 'Tuteurs'     },
+  { value: 'admin',      label: 'Admins'      },
+];
+
+const roleLabel = { etudiant: 'Étudiant', enseignant: 'Enseignant', tuteur: 'Tuteur', admin: 'Admin' };
 
 const AdminUsers = () => {
-  const [users,   setUsers]   = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search,  setSearch]  = useState('');
-  const [role,    setRole]    = useState('');
-  const [showForm, setShowForm] = useState(false);
+  const [users,      setUsers]      = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [search,     setSearch]     = useState('');
+  const [role,       setRole]       = useState('');
+  const [showForm,   setShowForm]   = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [form, setForm] = useState({
     nom: '', prenom: '', email: '', mot_de_passe: '',
     role: 'etudiant', formation: '', departement: ''
   });
 
-    const [pwdType, PwdToggle] = usePasswordToggle();
+  const [pwdType, PwdToggle] = usePasswordToggle();
 
-  const load = async () => {
+  const load = async (searchVal = search, roleVal = role) => {
     setLoading(true);
     try {
-      const res = await userAPI.getAll({ search: search || undefined, role: role || undefined });
+      const res = await userAPI.getAll({
+        search: searchVal || undefined,
+        role:   roleVal   || undefined,
+      });
       setUsers(res.data.users);
     } catch {} finally { setLoading(false); }
   };
 
-  React.useEffect(() => { load(); }, [role]);
+  React.useEffect(() => { load(); }, []);
 
-const validateForm = () => {
-  const errs = {};
-  if (!form.prenom.trim()) errs.prenom = 'Prénom obligatoire.';
-  if (!form.nom.trim()) errs.nom = 'Nom obligatoire.';
-  if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email))
-    errs.email = 'Email invalide.';
+  const handleRoleTab = (val) => {
+    setRole(val);
+    load(search, val);
+  };
 
-  const mdp = form.mot_de_passe;
-  if (mdp.length < 12)
-    errs.mot_de_passe = 'Minimum 12 caractères.';
-  else if (!/[A-Z]/.test(mdp))
-    errs.mot_de_passe = 'Au moins une majuscule requise.';
-  else if (!/[a-z]/.test(mdp))
-    errs.mot_de_passe = 'Au moins une minuscule requise.';
-  else if (!/[0-9]/.test(mdp))
-    errs.mot_de_passe = 'Au moins un chiffre requis.';
-  else if (!/[^A-Za-z0-9]/.test(mdp))
-    errs.mot_de_passe = 'Au moins un caractère spécial requis (ex: !@#$).';
+  const handleSearch = (e) => {
+    e.preventDefault();
+    load(search, role);
+  };
 
-  setFormErrors(errs);
-  return Object.keys(errs).length === 0;
-};
+  const validateForm = () => {
+    const errs = {};
+    if (!form.prenom.trim()) errs.prenom = 'Prénom obligatoire.';
+    if (!form.nom.trim())    errs.nom    = 'Nom obligatoire.';
+    if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email))
+      errs.email = 'Email invalide.';
+    const mdp = form.mot_de_passe;
+    if (mdp.length < 12)                errs.mot_de_passe = 'Minimum 12 caractères.';
+    else if (!/[A-Z]/.test(mdp))        errs.mot_de_passe = 'Au moins une majuscule requise.';
+    else if (!/[a-z]/.test(mdp))        errs.mot_de_passe = 'Au moins une minuscule requise.';
+    else if (!/[0-9]/.test(mdp))        errs.mot_de_passe = 'Au moins un chiffre requis.';
+    else if (!/[^A-Za-z0-9]/.test(mdp)) errs.mot_de_passe = 'Au moins un caractère spécial (ex: !@#$).';
+    setFormErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const handleToggle = async (id, actif) => {
     try {
@@ -72,51 +87,51 @@ const validateForm = () => {
       setFormErrors({});
       load();
     } catch (err) {
-      const msg = err.response?.data?.message || '';
       if (err.response?.data?.errors) {
         toast.error(err.response.data.errors[0]?.msg || 'Erreur de validation.');
       } else {
-        toast.error(msg || 'Erreur lors de la création.');
+        toast.error(err.response?.data?.message || 'Erreur lors de la création.');
       }
     }
   };
 
-  const roleLabel = { etudiant: 'Étudiant', enseignant: 'Enseignant', tuteur: 'Tuteur', admin: 'Admin' };
-
   return (
     <Layout>
-      <div className="page-header">
+
+      {/* ── Header ── */}
+      <div className="sl-header">
         <div>
           <h1 className="page-title">Gestion des utilisateurs</h1>
-          <p className="page-subtitle">{users.length} utilisateur(s)</p>
+          <p className="page-subtitle">
+            {loading ? 'Chargement…' : `${users.length} utilisateur${users.length > 1 ? 's' : ''}`}
+          </p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setShowForm(v => !v); setFormErrors({}); }}>
+        <button
+          className="btn btn-primary"
+          onClick={() => { setShowForm(v => !v); setFormErrors({}); }}
+        >
           {showForm ? 'Annuler' : 'Nouvel utilisateur'}
         </button>
       </div>
 
+      {/* ── Formulaire création ── */}
       {showForm && (
         <div className="card" style={{ marginBottom: 24 }}>
           <div className="card-header"><h3 className="card-title">Créer un compte</h3></div>
           <div className="card-body">
             <form onSubmit={handleCreate} noValidate>
+
               <div className="form-row" style={{ marginBottom: 14 }}>
                 <div className="form-group">
                   <label className="form-label">Prénom <span className="req">*</span></label>
-                  <input
-                    className={`form-control ${formErrors.prenom ? 'error' : ''}`}
-                    value={form.prenom}
-                    onChange={e => setForm(f => ({ ...f, prenom: e.target.value }))}
-                  />
+                  <input className={`form-control ${formErrors.prenom ? 'error' : ''}`}
+                    value={form.prenom} onChange={e => setForm(f => ({ ...f, prenom: e.target.value }))} />
                   {formErrors.prenom && <span className="form-error">{formErrors.prenom}</span>}
                 </div>
                 <div className="form-group">
                   <label className="form-label">Nom <span className="req">*</span></label>
-                  <input
-                    className={`form-control ${formErrors.nom ? 'error' : ''}`}
-                    value={form.nom}
-                    onChange={e => setForm(f => ({ ...f, nom: e.target.value }))}
-                  />
+                  <input className={`form-control ${formErrors.nom ? 'error' : ''}`}
+                    value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} />
                   {formErrors.nom && <span className="form-error">{formErrors.nom}</span>}
                 </div>
               </div>
@@ -124,12 +139,8 @@ const validateForm = () => {
               <div className="form-row" style={{ marginBottom: 14 }}>
                 <div className="form-group">
                   <label className="form-label">Email <span className="req">*</span></label>
-                  <input
-                    type="email"
-                    className={`form-control ${formErrors.email ? 'error' : ''}`}
-                    value={form.email}
-                    onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                  />
+                  <input type="email" className={`form-control ${formErrors.email ? 'error' : ''}`}
+                    value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                   {formErrors.email && <span className="form-error">{formErrors.email}</span>}
                 </div>
                 <div className="form-group">
@@ -146,18 +157,16 @@ const validateForm = () => {
                   </div>
                   {formErrors.mot_de_passe
                     ? <span className="form-error">{formErrors.mot_de_passe}</span>
-                    : <span className="form-hint">Minimum 12 caractères, avec majuscule, minuscule, chiffre et caractère spécial.</span>}
+                    : <span className="form-hint">12 car. min., majuscule, minuscule, chiffre, caractère spécial</span>
+                  }
                 </div>
               </div>
 
               <div className="form-row" style={{ marginBottom: 20 }}>
                 <div className="form-group">
                   <label className="form-label">Rôle <span className="req">*</span></label>
-                  <select
-                    className="form-control"
-                    value={form.role}
-                    onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-                  >
+                  <select className="form-control" value={form.role}
+                    onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
                     <option value="etudiant">Étudiant</option>
                     <option value="enseignant">Enseignant</option>
                     <option value="tuteur">Tuteur</option>
@@ -167,23 +176,15 @@ const validateForm = () => {
                 {form.role === 'etudiant' && (
                   <div className="form-group">
                     <label className="form-label">Formation</label>
-                    <input
-                      className="form-control"
-                      placeholder="BTS SIO SLAM"
-                      value={form.formation}
-                      onChange={e => setForm(f => ({ ...f, formation: e.target.value }))}
-                    />
+                    <input className="form-control" placeholder="BTS SIO SLAM"
+                      value={form.formation} onChange={e => setForm(f => ({ ...f, formation: e.target.value }))} />
                   </div>
                 )}
                 {form.role === 'enseignant' && (
                   <div className="form-group">
                     <label className="form-label">Département</label>
-                    <input
-                      className="form-control"
-                      placeholder="Informatique"
-                      value={form.departement}
-                      onChange={e => setForm(f => ({ ...f, departement: e.target.value }))}
-                    />
+                    <input className="form-control" placeholder="Informatique"
+                      value={form.departement} onChange={e => setForm(f => ({ ...f, departement: e.target.value }))} />
                   </div>
                 )}
               </div>
@@ -194,32 +195,43 @@ const validateForm = () => {
         </div>
       )}
 
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div className="card-body" style={{ display: 'flex', gap: 12, padding: 14, flexWrap: 'wrap' }}>
-          <form onSubmit={e => { e.preventDefault(); load(); }} style={{ display: 'flex', gap: 8, flex: 1, minWidth: 200 }}>
-            <input
-              className="form-control"
-              placeholder="Rechercher par nom ou email"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{ flex: 1 }}
-            />
-            <button type="submit" className="btn btn-primary btn-sm">Rechercher</button>
-          </form>
-          <select className="form-control" style={{ width: 160 }} value={role} onChange={e => setRole(e.target.value)}>
-            <option value="">Tous les rôles</option>
-            <option value="etudiant">Étudiants</option>
-            <option value="enseignant">Enseignants</option>
-            <option value="tuteur">Tuteurs</option>
-            <option value="admin">Admins</option>
-          </select>
+      {/* ── Barre de recherche + onglets rôle ── */}
+      <div className="sl-filters">
+        <form onSubmit={handleSearch} className="sl-search">
+          <Search size={16} className="sl-search-icon" />
+          <input
+            className="sl-search-input"
+            placeholder="Rechercher par nom, prénom ou email"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <button type="submit" className="btn btn-primary btn-sm">Rechercher</button>
+        </form>
+
+        <div className="sl-statut-tabs">
+          <SlidersHorizontal size={14} style={{ color: 'var(--muted)', flexShrink: 0 }} />
+          {ROLES.map(r => (
+            <button
+              key={r.value}
+              className={`sl-tab ${role === r.value ? 'active' : ''}`}
+              onClick={() => handleRoleTab(r.value)}
+            >
+              {r.label}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* ── Tableau ── */}
       <div className="card">
         <div className="table-wrapper">
           {loading ? (
             <div className="loading-center"><div className="spinner"></div></div>
+          ) : users.length === 0 ? (
+            <div className="sl-empty" style={{ padding: '48px 24px' }}>
+              <h3>Aucun utilisateur trouvé</h3>
+              <p>Essayez de modifier votre recherche ou vos filtres.</p>
+            </div>
           ) : (
             <table>
               <thead>
@@ -236,13 +248,18 @@ const validateForm = () => {
                 {users.map(u => (
                   <tr key={u.id_utilisateur}>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#667eea,#764ba2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.7rem', fontWeight: 700, flexShrink: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{
+                          width: 36, height: 36, borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: 'white', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0
+                        }}>
                           {u.prenom?.[0]}{u.nom?.[0]}
                         </div>
                         <div>
-                          <div style={{ fontWeight: 600 }}>{u.prenom} {u.nom}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+                          <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{u.prenom} {u.nom}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>
                             Créé le {new Date(u.created_at).toLocaleDateString('fr-FR')}
                           </div>
                         </div>
