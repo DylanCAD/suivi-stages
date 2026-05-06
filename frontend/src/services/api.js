@@ -48,63 +48,66 @@ api.interceptors.response.use(
 // AUTH
 // ════════════════════════════════════════════════
 export const authAPI = {
-  login:           (data)  => api.post('/auth/login', data),
-  logout:          ()      => api.post('/auth/logout'),
-  getMe:           ()      => api.get('/auth/me'),
-  refresh:         (token) => api.post('/auth/refresh', { refreshToken: token }),
-
-  // 🔐 MOT DE PASSE OUBLIÉ
-  forgotPassword:  (email) => api.post('/auth/forgot-password', { email }),
-
-  // 🔐 RESET MOT DE PASSE
-  resetPassword:   (data)  => api.post('/auth/reset-password', data),
-
-  contactAdmin: (data) => api.post('/auth/contact-admin', data),
+  login:          (data)  => api.post('/auth/login', data),
+  logout:         ()      => api.post('/auth/logout'),
+  getMe:          ()      => api.get('/auth/me'),
+  refresh:        (token) => api.post('/auth/refresh', { refreshToken: token }),
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  resetPassword:  (data)  => api.post('/auth/reset-password', data),
+  contactAdmin:   (data)  => api.post('/auth/contact-admin', data),
 };
 
 // ════════════════════════════════════════════════
 // STAGES
 // ════════════════════════════════════════════════
 export const stageAPI = {
-  getAll:   (params) => api.get('/stages', { params }),
-  getById:  (id)     => api.get(`/stages/${id}`),
-  create:   (data)   => api.post('/stages', data),
-  update:   (id, data) => api.put(`/stages/${id}`, data),
-  valider:  (id, data) => api.put(`/stages/${id}/valider`, data),
-  getStats: ()       => api.get('/stages/stats'),
+  getAll:        (params)   => api.get('/stages', { params }),
+  getById:       (id)       => api.get(`/stages/${id}`),
+  create:        (data)     => api.post('/stages', data),
+  update:        (id, data) => api.put(`/stages/${id}`, data),
+  valider:       (id, data) => api.put(`/stages/${id}/valider`, data),
+  changerStatut: (id, data) => api.put(`/stages/${id}/statut`, data), // ← nouveau
+  getStats:      ()         => api.get('/stages/stats'),
 };
 
 // ════════════════════════════════════════════════
 // DOCUMENTS
 // ════════════════════════════════════════════════
 export const documentAPI = {
-  getByStage: (idStage) => api.get(`/stages/${idStage}/documents`),
-  upload: (idStage, formData) =>
-    api.post(`/stages/${idStage}/documents`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
-  download: (id) => api.get(`/documents/${id}/download`, { responseType: 'blob' }),
-  delete: (id) => api.delete(`/documents/${id}`),
+  getByStage: (idStage)       => api.get(`/stages/${idStage}/documents`),
+  upload:     (idStage, form) => api.post(`/stages/${idStage}/documents`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+  download:   (id)            => api.get(`/documents/${id}/download`, { responseType: 'blob' }),
+  delete:     (id)            => api.delete(`/documents/${id}`),
 };
 
 // ════════════════════════════════════════════════
 // UTILISATEURS
 // ════════════════════════════════════════════════
 export const userAPI = {
-  getAll: (params) => api.get('/users', { params }),
-  create: (data) => api.post('/users', data),
-  toggle: (id) => api.patch(`/users/${id}/toggle`),
-  updateProfile: (data) => api.put('/users/me', data),
-  changePassword: (data) => api.put('/users/me/password', data),
+  getAll:         (params) => api.get('/users', { params }),
+  create:         (data)   => api.post('/users', data),
+  toggle:         (id)     => api.patch(`/users/${id}/toggle`),
+  updateProfile:  (data)   => api.put('/users/me', data),
+  changePassword: (data)   => api.put('/users/me/password', data),
+};
+
+// ════════════════════════════════════════════════
+// ENTREPRISES
+// ════════════════════════════════════════════════
+export const entrepriseAPI = {
+  getAll: ()     => api.get('/entreprises'),
+  create: (data) => api.post('/entreprises', data),
 };
 
 // ════════════════════════════════════════════════
 // NOTIFICATIONS
 // ════════════════════════════════════════════════
 export const notifAPI = {
-  getAll: (params) => api.get('/notifications', { params }),
-  marquerLue: (id) => api.patch(`/notifications/${id}/lire`),
-  marquerTout: () => api.patch('/notifications/lire-tout'),
+  getAll:      (params) => api.get('/notifications', { params }),
+  marquerLue:  (id)     => api.patch(`/notifications/${id}/lire`),
+  marquerTout: ()       => api.patch('/notifications/lire-tout'),
 };
 
 export default api;
