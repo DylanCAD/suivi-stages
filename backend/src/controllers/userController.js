@@ -11,7 +11,7 @@ const getUsers = async (req, res, next) => {
 
     let query = `
       SELECT u.id_utilisateur, u.nom, u.prenom, u.email, u.role, u.actif, u.created_at,
-             e.formation, e.numero_etudiant,
+             e.formation, e.numero_etudiant, e.id_enseignant_ref,
              en.departement,
              t.poste
       FROM utilisateurs u
@@ -45,7 +45,24 @@ const createUser = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
 
-    const { nom, prenom, email, mot_de_passe, role, formation, departement, poste, id_entreprise, niveau_acces } = req.body;
+    const {
+      nom, prenom, email, mot_de_passe, role,
+      formation, departement, poste, id_entreprise, niveau_acces,
+      id_enseignant_ref,  // ← nouveau
+    } = req.body;
+
+    // Validation métier selon le rôle
+    if (role === 'tuteur' && !id_entreprise) {
+      return res.status(422).json({
+        errors: [{ msg: "L'identifiant de l'entreprise est obligatoire pour un tuteur.", path: 'id_entreprise' }]
+      });
+    }
+
+    if (role === 'etudiant' && !id_enseignant_ref) {
+      return res.status(422).json({
+        errors: [{ msg: "L'enseignant référent est obligatoire pour un étudiant.", path: 'id_enseignant_ref' }]
+      });
+    }
 
     // Hash le mot de passe
     const hash = await bcrypt.hash(mot_de_passe, 12);
@@ -64,8 +81,8 @@ const createUser = async (req, res, next) => {
       // Insère dans la table spécialisée selon le rôle
       if (role === 'etudiant') {
         await connection.execute(
-          'INSERT INTO etudiants (id_utilisateur, formation) VALUES (?, ?)',
-          [id, formation || '']
+          'INSERT INTO etudiants (id_utilisateur, formation, id_enseignant_ref) VALUES (?, ?, ?)',
+          [id, formation || '', id_enseignant_ref]
         );
       } else if (role === 'enseignant') {
         await connection.execute(
@@ -145,7 +162,6 @@ const changePassword = async (req, res, next) => {
     const { id_utilisateur } = req.user;
     const { ancien_mot_de_passe, nouveau_mot_de_passe } = req.body;
 
-    // Validation du nouveau mot de passe
     if (!nouveau_mot_de_passe || nouveau_mot_de_passe.length < 12)
       return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 12 caractères.' });
     if (!/[A-Z]/.test(nouveau_mot_de_passe))

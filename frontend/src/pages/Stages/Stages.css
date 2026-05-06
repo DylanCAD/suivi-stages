@@ -490,3 +490,50 @@ body.dark .sf-recap-block { background: #0f172a; border-color: #334155; }
   .sd-timeline { overflow-x: auto; padding-bottom: 4px; }
   .sf-card { padding: 20px; }
 }
+
+/* ── Bouton Évaluer ── */
+.btn-evaluer {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  padding: 2px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f59e0b, #d97706, #b45309);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-evaluer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+  pointer-events: none;
+}
+
+.btn-evaluer:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+  text-decoration: none;
+}
+
+.btn-evaluer:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.btn-evaluer-inner {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}

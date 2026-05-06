@@ -16,6 +16,7 @@ const userRoutes         = require('./routes/users');
 const notificationRoutes = require('./routes/notifications');
 const evaluationRoutes   = require('./routes/evaluations');
 const exportRoutes       = require('./routes/export');
+const documentsRoutes    = require('./routes/documents'); // ← déplacé ici
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -47,6 +48,8 @@ app.use('/api/users',         userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/evaluations',   evaluationRoutes);
 app.use('/api/export',        exportRoutes);
+app.use('/api/documents',     documentsRoutes); // ← monté ici, après app = express()
+app.use('/api/entreprises',   require('./routes/entreprises'));
 
 // ─── Health check ───
 app.get('/api/health', (req, res) => {
@@ -64,8 +67,6 @@ app.use(errorHandler);
 // ─── Start server ───
 const startServer = async () => {
   await testConnection();
-
-  // 🔥 TEST EMAIL ACTIVÉ ICI
   await testMailer();
 
   app.listen(PORT, () => {

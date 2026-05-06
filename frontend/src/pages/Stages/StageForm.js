@@ -8,8 +8,8 @@ import { ChevronRight, Check, Building2, FileText, ClipboardCheck } from 'lucide
 import './Stages.css';
 
 const STEPS = [
-  { label: 'Informations',  icon: FileText      },
-  { label: 'Entreprise',    icon: Building2     },
+  { label: 'Informations',  icon: FileText },
+  { label: 'Entreprise',    icon: Building2 },
   { label: 'Récapitulatif', icon: ClipboardCheck },
 ];
 
@@ -27,16 +27,25 @@ const StageForm = () => {
       stageAPI.getById(id).then(res => {
         const s = res.data.stage;
         reset({
-          titre: s.titre, description: s.description, missions: s.missions,
-          date_debut: s.date_debut?.split('T')[0],
-          date_fin:   s.date_fin?.split('T')[0],
-          raison_sociale: s.raison_sociale, siret: s.siret,
-          secteur_activite: s.secteur_activite, ville: s.ville,
-          code_postal: s.code_postal,
+          titre:            s.titre,
+          description:      s.description,
+          missions:         s.missions,
+          date_debut:       s.date_debut?.split('T')[0],
+          date_fin:         s.date_fin?.split('T')[0],
+          raison_sociale:   s.raison_sociale,
+          siret:            s.siret,
+          secteur_activite: s.secteur_activite,
+          ville:            s.ville,
+          code_postal:      s.code_postal,
+          tuteur_prenom:    s.tuteur_prenom,
+          tuteur_nom:       s.tuteur_nom,
+          tuteur_email:     s.tuteur_email,
+          tuteur_poste:     s.tuteur_poste,
+          tuteur_telephone: s.tuteur_telephone, // ← ajouté
         });
       });
     }
-  }, [id]);
+  }, [id, reset]);
 
   const nextStep = handleSubmit((stepData) => {
     setData(prev => ({ ...prev, ...stepData }));
@@ -90,15 +99,13 @@ const StageForm = () => {
                 </div>
                 <span className="sf-step-label">{s.label}</span>
               </div>
-              {i < STEPS.length - 1 && (
-                <div className={`sf-step-line ${done ? 'done' : ''}`} />
-              )}
+              {i < STEPS.length - 1 && <div className={`sf-step-line ${done ? 'done' : ''}`} />}
             </React.Fragment>
           );
         })}
       </div>
 
-      {/* Barre de progression */}
+      {/* Progress bar */}
       <div className="sf-progress">
         <div className="sf-progress-fill" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
       </div>
@@ -111,7 +118,9 @@ const StageForm = () => {
             <div className="sf-section-title">Informations du stage</div>
 
             <div className="form-group sf-field">
-              <label className="form-label">Titre du poste <span className="req">*</span></label>
+              <label className="form-label">
+                Titre du poste <span className="req">*</span>
+              </label>
               <input
                 className={`form-control ${errors.titre ? 'error' : ''}`}
                 placeholder="Ex : Développeur Full-Stack"
@@ -122,34 +131,50 @@ const StageForm = () => {
 
             <div className="form-row sf-field">
               <div className="form-group">
-                <label className="form-label">Date de début <span className="req">*</span></label>
-                <input type="date" className={`form-control ${errors.date_debut ? 'error' : ''}`}
-                  {...register('date_debut', { required: 'Date de début obligatoire.' })} />
+                <label className="form-label">
+                  Date de début <span className="req">*</span>
+                </label>
+                <input
+                  type="date"
+                  className={`form-control ${errors.date_debut ? 'error' : ''}`}
+                  {...register('date_debut', { required: 'Date de début obligatoire.' })}
+                />
                 {errors.date_debut && <span className="form-error">{errors.date_debut.message}</span>}
               </div>
               <div className="form-group">
-                <label className="form-label">Date de fin <span className="req">*</span></label>
-                <input type="date" className={`form-control ${errors.date_fin ? 'error' : ''}`}
+                <label className="form-label">
+                  Date de fin <span className="req">*</span>
+                </label>
+                <input
+                  type="date"
+                  className={`form-control ${errors.date_fin ? 'error' : ''}`}
                   {...register('date_fin', {
                     required: 'Date de fin obligatoire.',
                     validate: v => !dateDebut || v > dateDebut || 'La fin doit être après le début.'
-                  })} />
+                  })}
+                />
                 {errors.date_fin && <span className="form-error">{errors.date_fin.message}</span>}
               </div>
             </div>
 
             <div className="form-group sf-field">
               <label className="form-label">Description</label>
-              <textarea className="form-control" rows={4}
+              <textarea
+                className="form-control"
+                rows={4}
                 placeholder="Décrivez le contexte et les objectifs du stage…"
-                {...register('description')} />
+                {...register('description')}
+              />
             </div>
 
             <div className="form-group sf-field">
               <label className="form-label">Missions principales</label>
-              <textarea className="form-control" rows={4}
+              <textarea
+                className="form-control"
+                rows={4}
                 placeholder="Listez les missions que vous allez réaliser…"
-                {...register('missions')} />
+                {...register('missions')}
+              />
             </div>
 
             <div className="sf-actions">
@@ -167,20 +192,25 @@ const StageForm = () => {
             <div className="sf-section-title">Entreprise d'accueil</div>
 
             <div className="form-group sf-field">
-              <label className="form-label">Raison sociale <span className="req">*</span></label>
-              <input className={`form-control ${errors.raison_sociale ? 'error' : ''}`}
+              <label className="form-label">
+                Raison sociale <span className="req">*</span>
+              </label>
+              <input
+                className={`form-control ${errors.raison_sociale ? 'error' : ''}`}
                 placeholder="Ex : Capgemini France SAS"
-                {...register('raison_sociale', { required: 'Raison sociale obligatoire.' })} />
+                {...register('raison_sociale', { required: 'Raison sociale obligatoire.' })}
+              />
               {errors.raison_sociale && <span className="form-error">{errors.raison_sociale.message}</span>}
             </div>
 
             <div className="form-row sf-field">
               <div className="form-group">
                 <label className="form-label">SIRET (14 chiffres)</label>
-                <input className="form-control" placeholder="44229342600031"
-                  {...register('siret', {
-                    pattern: { value: /^\d{14}$/, message: 'SIRET invalide (14 chiffres).' }
-                  })} />
+                <input
+                  className="form-control"
+                  placeholder="44229342600031"
+                  {...register('siret', { pattern: { value: /^\d{14}$/, message: 'SIRET invalide (14 chiffres).' } })}
+                />
                 {errors.siret && <span className="form-error">{errors.siret.message}</span>}
               </div>
               <div className="form-group">
@@ -210,9 +240,84 @@ const StageForm = () => {
               </div>
             </div>
 
+            {/* ── Section Tuteur ── */}
+            <div className="sf-section-title" style={{ marginTop: 24 }}>
+              Tuteur en entreprise
+            </div>
+
+            <div className="form-row sf-field">
+              <div className="form-group">
+                <label className="form-label">
+                  Prénom du tuteur <span className="req">*</span>
+                </label>
+                <input
+                  className={`form-control ${errors.tuteur_prenom ? 'error' : ''}`}
+                  placeholder="Ex : Marie"
+                  {...register('tuteur_prenom', { required: 'Prénom du tuteur obligatoire.' })}
+                />
+                {errors.tuteur_prenom && <span className="form-error">{errors.tuteur_prenom.message}</span>}
+              </div>
+              <div className="form-group">
+                <label className="form-label">
+                  Nom du tuteur <span className="req">*</span>
+                </label>
+                <input
+                  className={`form-control ${errors.tuteur_nom ? 'error' : ''}`}
+                  placeholder="Ex : Dupont"
+                  {...register('tuteur_nom', { required: 'Nom du tuteur obligatoire.' })}
+                />
+                {errors.tuteur_nom && <span className="form-error">{errors.tuteur_nom.message}</span>}
+              </div>
+            </div>
+
+            <div className="form-row sf-field">
+              <div className="form-group">
+                <label className="form-label">
+                  Email du tuteur <span className="req">*</span>
+                </label>
+                <input
+                  type="email"
+                  className={`form-control ${errors.tuteur_email ? 'error' : ''}`}
+                  placeholder="marie.dupont@entreprise.fr"
+                  {...register('tuteur_email', {
+                    required: 'Email du tuteur obligatoire.',
+                    pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Email invalide.' }
+                  })}
+                />
+                {errors.tuteur_email && <span className="form-error">{errors.tuteur_email.message}</span>}
+              </div>
+              <div className="form-group">
+                <label className="form-label">Poste du tuteur</label>
+                <input
+                  className="form-control"
+                  placeholder="Ex : Responsable technique"
+                  {...register('tuteur_poste')}
+                />
+              </div>
+            </div>
+
+            <div className="form-row sf-field">
+              <div className="form-group">
+                <label className="form-label">Téléphone du tuteur</label>
+                <input
+                  className={`form-control ${errors.tuteur_telephone ? 'error' : ''}`}
+                  placeholder="Ex : 06 12 34 56 78"
+                  {...register('tuteur_telephone', {
+                    pattern: { value: /^[\d\s\+\-\.]{10,15}$/, message: 'Numéro invalide.' }
+                  })}
+                />
+                {errors.tuteur_telephone && <span className="form-error">{errors.tuteur_telephone.message}</span>}
+              </div>
+              <div className="form-group" /> {/* colonne vide pour l'alignement */}
+            </div>
+
             <div className="sf-actions">
-              <button type="button" className="btn btn-ghost" onClick={prevStep}>← Précédent</button>
-              <button type="submit" className="btn btn-primary">Suivant <ChevronRight size={15} /></button>
+              <button type="button" className="btn btn-ghost" onClick={prevStep}>
+                ← Précédent
+              </button>
+              <button type="submit" className="btn btn-primary">
+                Suivant <ChevronRight size={15} />
+              </button>
             </div>
           </form>
         )}
@@ -227,9 +332,8 @@ const StageForm = () => {
                 <div className="sf-recap-label">Stage</div>
                 <div className="sf-recap-value">{data.titre}</div>
                 <div className="sf-recap-sub">
-                  {data.date_debut && new Date(data.date_debut).toLocaleDateString('fr-FR')}
-                  {' → '}
-                  {data.date_fin && new Date(data.date_fin).toLocaleDateString('fr-FR')}
+                  {data.date_debut && new Date(data.date_debut).toLocaleDateString('fr-FR')} {' → '}
+                  {data.date_fin   && new Date(data.date_fin).toLocaleDateString('fr-FR')}
                 </div>
                 {data.description && <div className="sf-recap-desc">{data.description}</div>}
               </div>
@@ -239,6 +343,16 @@ const StageForm = () => {
                 <div className="sf-recap-value">{data.raison_sociale || '—'}</div>
                 {data.secteur_activite && <div className="sf-recap-sub">{data.secteur_activite}</div>}
                 {data.ville && <div className="sf-recap-sub">{data.ville} {data.code_postal}</div>}
+              </div>
+
+              <div className="sf-recap-block">
+                <div className="sf-recap-label">Tuteur entreprise</div>
+                <div className="sf-recap-value">
+                  {data.tuteur_prenom} {data.tuteur_nom}
+                </div>
+                {data.tuteur_poste     && <div className="sf-recap-sub">{data.tuteur_poste}</div>}
+                {data.tuteur_email     && <div className="sf-recap-sub">{data.tuteur_email}</div>}
+                {data.tuteur_telephone && <div className="sf-recap-sub">{data.tuteur_telephone}</div>}
               </div>
             </div>
 

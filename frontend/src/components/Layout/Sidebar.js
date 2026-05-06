@@ -8,24 +8,23 @@ const Sidebar = () => {
 
   const menus = {
     etudiant: [
-      { to: '/dashboard', label: 'Dashboard' },
-      { to: '/stages',    label: 'Mes stages' },
-      { to: '/documents', label: 'Documents' },
+      { to: '/dashboard', label: 'Tableau de bord' },
+      { to: '/stages',    label: 'Stages' },
       { to: '/profile',   label: 'Mon profil' },
     ],
     enseignant: [
-      { to: '/dashboard', label: 'Dashboard' },
-      { to: '/stages',    label: 'Dossiers' },
+      { to: '/dashboard', label: 'Tableau de bord' },
+      { to: '/stages',    label: 'Stages' },
       { to: '/profile',   label: 'Mon profil' },
     ],
     tuteur: [
-      { to: '/dashboard', label: 'Dashboard' },
-      { to: '/stages',    label: 'Mes stagiaires' },
+      { to: '/dashboard', label: 'Tableau de bord' },
+      { to: '/stages',    label: 'Stages' },
       { to: '/profile',   label: 'Mon profil' },
     ],
     admin: [
       { to: '/dashboard',   label: 'Tableau de bord' },
-      { to: '/stages',      label: 'Tous les stages' },
+      { to: '/stages',      label: 'Stages' },
       { to: '/admin/users', label: 'Administration' },
     ],
   };
