@@ -1,15 +1,14 @@
-const jwt = require('jsonwebtoken');
+const jwt    = require('jsonwebtoken');
 const { pool } = require('../config/database');
 
 const authenticate = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    // ── Lit le token depuis le cookie HttpOnly (plus depuis le header Authorization) ──
+    const token = req.cookies?.accessToken;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       return res.status(401).json({ message: 'Token manquant. Veuillez vous connecter.' });
     }
-
-    const token = authHeader.split(' ')[1];
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -18,11 +17,13 @@ const authenticate = async (req, res, next) => {
       [decoded.id]
     );
 
-    if (rows.length === 0)
+    if (rows.length === 0) {
       return res.status(401).json({ message: 'Utilisateur introuvable.' });
+    }
 
-    if (!rows[0].actif)
+    if (!rows[0].actif) {
       return res.status(403).json({ message: 'Compte désactivé.' });
+    }
 
     req.user = rows[0];
     next();
@@ -40,13 +41,15 @@ const authenticate = async (req, res, next) => {
 };
 
 const authorize = (...roles) => (req, res, next) => {
-  if (!req.user)
+  if (!req.user) {
     return res.status(401).json({ message: 'Non authentifié.' });
+  }
 
-  if (!roles.includes(req.user.role))
+  if (!roles.includes(req.user.role)) {
     return res.status(403).json({
-      message: `Accès refusé. Rôle requis : ${roles.join(' ou ')}.`
+      message: `Accès refusé. Rôle requis : ${roles.join(' ou ')}.`,
     });
+  }
 
   next();
 };

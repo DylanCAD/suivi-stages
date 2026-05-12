@@ -16,7 +16,6 @@
   margin-bottom: 24px;
   flex-wrap: wrap;
 }
-.page-header-left {}
 .page-title {
   font-family: var(--mono);
   font-size: 1.3rem;

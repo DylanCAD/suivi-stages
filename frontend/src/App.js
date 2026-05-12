@@ -16,6 +16,7 @@ import Profile from './pages/Profile/Profile';
 import Evaluation from './pages/Evaluation/Evaluation';
 import EvalTuteur from './pages/Evaluation/EvalTuteur';
 import AdminUsers from './pages/Admin/AdminUsers';
+import VerifyOTP from './pages/Login/VerifyOTP';
 
 // 🔐 MOT DE PASSE OUBLIÉ
 import ForgotPassword from './pages/Login/ForgotPassword';
@@ -171,6 +172,15 @@ const AppRoutes = () => (
     <Route path="/contact-admin" element={
         <PublicRoute><ContactAdmin /></PublicRoute>
     }/>
+
+        <Route
+      path="/verify-otp"
+      element={
+        <PublicRoute>
+          <VerifyOTP />
+        </PublicRoute>
+      }
+    />
 
   </Routes>
 );

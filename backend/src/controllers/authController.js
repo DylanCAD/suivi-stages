@@ -3,6 +3,14 @@ const jwt    = require('jsonwebtoken');
 const { pool } = require('../config/database');
 const { validationResult } = require('express-validator');
 
+// ─── Options cookies communes ───
+const cookieOptions = (maxAge) => ({
+  httpOnly: true,
+  secure:   process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  maxAge,
+});
+
 // ─── Génère un access token (durée courte : 2h) ───
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -26,7 +34,6 @@ const generateRefreshToken = (user) => {
 // ════════════════════════════════════════════════
 const login = async (req, res, next) => {
   try {
-    // 1. Valide les données envoyées
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(422).json({ message: 'Données invalides.', errors: errors.array() });
@@ -34,64 +41,85 @@ const login = async (req, res, next) => {
 
     const { email, mot_de_passe } = req.body;
 
-    // 2. Cherche l'utilisateur par email
     const [rows] = await pool.execute(
-      `SELECT u.*, 
-              CASE 
-                WHEN u.role = 'etudiant'     THEN e.formation
-                WHEN u.role = 'enseignant'   THEN en.departement
-                WHEN u.role = 'tuteur'       THEN t.poste
+      `SELECT u.*,
+              CASE
+                WHEN u.role = 'etudiant'   THEN e.formation
+                WHEN u.role = 'enseignant' THEN en.departement
+                WHEN u.role = 'tuteur'     THEN t.poste
                 ELSE NULL
               END as info_role
        FROM utilisateurs u
-       LEFT JOIN etudiants e  ON u.id_utilisateur = e.id_utilisateur
+       LEFT JOIN etudiants e    ON u.id_utilisateur = e.id_utilisateur
        LEFT JOIN enseignants en ON u.id_utilisateur = en.id_utilisateur
-       LEFT JOIN tuteurs t    ON u.id_utilisateur = t.id_utilisateur
+       LEFT JOIN tuteurs t      ON u.id_utilisateur = t.id_utilisateur
        WHERE u.email = ?`,
       [email.toLowerCase()]
     );
 
     if (rows.length === 0) {
+      console.warn(`[AUTH] Échec login — email inconnu : ${email} — ${new Date().toISOString()}`);
       return res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
     }
 
     const user = rows[0];
 
-    // 3. Vérifie que le compte est actif
     if (!user.actif) {
-      return res.status(403).json({ message: 'Compte désactivé. Contactez l\'administration.' });
+      console.warn(`[AUTH] Tentative login — compte désactivé : ${email} — ${new Date().toISOString()}`);
+      return res.status(403).json({ message: "Compte désactivé. Contactez l'administration." });
     }
 
-    // 4. Compare le mot de passe avec le hash bcrypt
     const motDePasseValide = await bcrypt.compare(mot_de_passe, user.mot_de_passe);
     if (!motDePasseValide) {
+      console.warn(`[AUTH] Échec login — mot de passe incorrect : ${email} — ${new Date().toISOString()}`);
       return res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
     }
 
-    // 5. Génère les tokens
+    // Admin → envoie OTP, pas de token encore
+    if (user.role === 'admin') {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+      await pool.execute(
+        'UPDATE utilisateurs SET otp_code = ?, otp_expiry = ? WHERE id_utilisateur = ?',
+        [otp, otpExpiry, user.id_utilisateur]
+      );
+
+      const { sendOTPEmail } = require('../config/mailer');
+      await sendOTPEmail(user.email, user.prenom, otp);
+
+      return res.json({
+        requires2FA: true,
+        userId: user.id_utilisateur,
+        message: 'Code de vérification envoyé par email.'
+      });
+    }
+
+    // Autres rôles → connexion directe avec cookies HttpOnly
     const accessToken  = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    // 6. Sauvegarde le refresh token en base
-    const expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // +7 jours
+    const expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
     await pool.execute(
       'UPDATE utilisateurs SET refresh_token = ?, token_expiry = ? WHERE id_utilisateur = ?',
       [refreshToken, expiry, user.id_utilisateur]
     );
 
-    // 7. Répond avec les infos (sans le mot de passe !)
+    res.cookie('accessToken',  accessToken,  cookieOptions(2 * 60 * 60 * 1000));
+    res.cookie('refreshToken', refreshToken, cookieOptions(7 * 24 * 60 * 60 * 1000));
+
+    console.info(`[AUTH] Connexion réussie : ${email} (${user.role}) — ${new Date().toISOString()}`);
+
     res.json({
       message: 'Connexion réussie.',
-      accessToken,
-      refreshToken,
       user: {
         id:        user.id_utilisateur,
         nom:       user.nom,
         prenom:    user.prenom,
         email:     user.email,
         role:      user.role,
-        info_role: user.info_role
-      }
+        info_role: user.info_role,
+      },
     });
 
   } catch (error) {
@@ -101,32 +129,29 @@ const login = async (req, res, next) => {
 
 // ════════════════════════════════════════════════
 // POST /api/auth/refresh
-// Renouvelle l'access token avec le refresh token
 // ════════════════════════════════════════════════
 const refreshToken = async (req, res, next) => {
   try {
-    const { refreshToken: token } = req.body;
+    const token = req.cookies?.refreshToken;
     if (!token) {
       return res.status(401).json({ message: 'Refresh token manquant.' });
     }
 
-    // Vérifie le refresh token
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 
-    // Vérifie qu'il correspond bien à celui en base
     const [rows] = await pool.execute(
-      'SELECT * FROM utilisateurs WHERE id_utilisateur = ? AND refresh_token = ? AND token_expiry > NOW()',
+      'SELECT * FROM utilisateurs WHERE id_utilisateur = ? AND refresh_token = ? AND token_expiry > UTC_TIMESTAMP()',
       [decoded.id, token]
     );
 
     if (rows.length === 0) {
+      console.warn(`[AUTH] Refresh token invalide ou expiré — id: ${decoded.id} — ${new Date().toISOString()}`);
       return res.status(401).json({ message: 'Refresh token invalide ou expiré.' });
     }
 
-    const user = rows[0];
-    const newAccessToken = generateAccessToken(user);
-
-    res.json({ accessToken: newAccessToken });
+    const newAccessToken = generateAccessToken(rows[0]);
+    res.cookie('accessToken', newAccessToken, cookieOptions(2 * 60 * 60 * 1000));
+    res.json({ message: 'Token renouvelé.' });
 
   } catch (error) {
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
@@ -141,11 +166,16 @@ const refreshToken = async (req, res, next) => {
 // ════════════════════════════════════════════════
 const logout = async (req, res, next) => {
   try {
-    // Efface le refresh token en base
     await pool.execute(
       'UPDATE utilisateurs SET refresh_token = NULL, token_expiry = NULL WHERE id_utilisateur = ?',
       [req.user.id_utilisateur]
     );
+
+    res.clearCookie('accessToken',  { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' });
+    res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' });
+
+    console.info(`[AUTH] Déconnexion : ${req.user.email} — ${new Date().toISOString()}`);
+
     res.json({ message: 'Déconnexion réussie.' });
   } catch (error) {
     next(error);
@@ -154,7 +184,6 @@ const logout = async (req, res, next) => {
 
 // ════════════════════════════════════════════════
 // GET /api/auth/me
-// Renvoie les infos de l'utilisateur connecté
 // ════════════════════════════════════════════════
 const getMe = async (req, res, next) => {
   try {
@@ -165,10 +194,10 @@ const getMe = async (req, res, next) => {
               t.poste, t.id_entreprise,
               a.niveau_acces
        FROM utilisateurs u
-       LEFT JOIN etudiants e   ON u.id_utilisateur = e.id_utilisateur AND u.role = 'etudiant'
-       LEFT JOIN enseignants en ON u.id_utilisateur = en.id_utilisateur AND u.role = 'enseignant'
-       LEFT JOIN tuteurs t     ON u.id_utilisateur = t.id_utilisateur AND u.role = 'tuteur'
-       LEFT JOIN administrateurs a ON u.id_utilisateur = a.id_utilisateur AND u.role = 'admin'
+       LEFT JOIN etudiants e       ON u.id_utilisateur = e.id_utilisateur  AND u.role = 'etudiant'
+       LEFT JOIN enseignants en    ON u.id_utilisateur = en.id_utilisateur AND u.role = 'enseignant'
+       LEFT JOIN tuteurs t         ON u.id_utilisateur = t.id_utilisateur  AND u.role = 'tuteur'
+       LEFT JOIN administrateurs a ON u.id_utilisateur = a.id_utilisateur  AND u.role = 'admin'
        WHERE u.id_utilisateur = ?`,
       [req.user.id_utilisateur]
     );
@@ -182,7 +211,6 @@ const getMe = async (req, res, next) => {
     next(error);
   }
 };
-
 
 // ════════════════════════════════════════════════
 // POST /api/auth/forgot-password
@@ -203,9 +231,9 @@ const forgotPassword = async (req, res, next) => {
     if (rows.length > 0 && rows[0].actif) {
       const user = rows[0];
 
-      const crypto = require('crypto');
+      const crypto     = require('crypto');
       const resetToken = crypto.randomBytes(32).toString('hex');
-      const expiry = new Date(Date.now() + 60 * 60 * 1000);
+      const expiry     = new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
 
       await pool.execute(
         'UPDATE utilisateurs SET reset_token = ?, reset_token_expiry = ? WHERE id_utilisateur = ?',
@@ -215,11 +243,11 @@ const forgotPassword = async (req, res, next) => {
       const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
       const { sendResetPasswordEmail } = require('../config/mailer');
       await sendResetPasswordEmail(email.toLowerCase(), user.prenom, resetUrl);
+
+      console.info(`[AUTH] Reset password demandé : ${email} — ${new Date().toISOString()}`);
     }
 
-    res.json({
-      message: 'Si cet email est enregistré, vous recevrez un lien de réinitialisation.'
-    });
+    res.json({ message: 'Si cet email est enregistré, vous recevrez un lien de réinitialisation.' });
 
   } catch (error) {
     next(error);
@@ -237,34 +265,35 @@ const resetPassword = async (req, res, next) => {
       return res.status(400).json({ message: 'Token et nouveau mot de passe obligatoires.' });
     }
 
-if (nouveau_mot_de_passe.length < 12)
-  return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 12 caractères.' });
-if (!/[A-Z]/.test(nouveau_mot_de_passe))
-  return res.status(400).json({ message: 'Le mot de passe doit contenir au moins une majuscule.' });
-if (!/[a-z]/.test(nouveau_mot_de_passe))
-  return res.status(400).json({ message: 'Le mot de passe doit contenir au moins une minuscule.' });
-if (!/[0-9]/.test(nouveau_mot_de_passe))
-  return res.status(400).json({ message: 'Le mot de passe doit contenir au moins un chiffre.' });
-if (!/[^A-Za-z0-9]/.test(nouveau_mot_de_passe))
-  return res.status(400).json({ message: 'Le mot de passe doit contenir au moins un caractère spécial (ex: !@#$).' });
+    if (nouveau_mot_de_passe.length < 12)
+      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 12 caractères.' });
+    if (!/[A-Z]/.test(nouveau_mot_de_passe))
+      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins une majuscule.' });
+    if (!/[a-z]/.test(nouveau_mot_de_passe))
+      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins une minuscule.' });
+    if (!/[0-9]/.test(nouveau_mot_de_passe))
+      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins un chiffre.' });
+    if (!/[^A-Za-z0-9]/.test(nouveau_mot_de_passe))
+      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins un caractère spécial (ex: !@#$).' });
 
     const [rows] = await pool.execute(
-      'SELECT id_utilisateur FROM utilisateurs WHERE reset_token = ? AND reset_token_expiry > NOW()',
+      'SELECT id_utilisateur FROM utilisateurs WHERE reset_token = ? AND reset_token_expiry > UTC_TIMESTAMP()',
       [token]
     );
 
     if (rows.length === 0) {
+      console.warn(`[AUTH] Reset password — token invalide ou expiré — ${new Date().toISOString()}`);
       return res.status(400).json({ message: 'Lien invalide ou expiré. Faites une nouvelle demande.' });
     }
-
-    const userId = rows[0].id_utilisateur;
 
     const hash = await bcrypt.hash(nouveau_mot_de_passe, 12);
 
     await pool.execute(
       'UPDATE utilisateurs SET mot_de_passe = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id_utilisateur = ?',
-      [hash, userId]
+      [hash, rows[0].id_utilisateur]
     );
+
+    console.info(`[AUTH] Mot de passe réinitialisé — id: ${rows[0].id_utilisateur} — ${new Date().toISOString()}`);
 
     res.json({ message: 'Mot de passe modifié avec succès. Vous pouvez vous connecter.' });
 
@@ -275,7 +304,6 @@ if (!/[^A-Za-z0-9]/.test(nouveau_mot_de_passe))
 
 // ════════════════════════════════════════════════
 // POST /api/auth/contact-admin
-// Envoie un email à l'admin depuis la page login
 // ════════════════════════════════════════════════
 const contactAdmin = async (req, res, next) => {
   try {
@@ -285,7 +313,6 @@ const contactAdmin = async (req, res, next) => {
       return res.status(400).json({ message: 'Tous les champs sont obligatoires.' });
     }
 
-    // Validation email basique
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       return res.status(400).json({ message: 'Adresse email invalide.' });
     }
@@ -341,18 +368,82 @@ const contactAdmin = async (req, res, next) => {
     `;
 
     await transporter.sendMail({
-      from:     process.env.SMTP_FROM,
-      to:       adminEmail,
-      replyTo:  email,          // Répondre directement à l'utilisateur
-      subject:  `Demande de premier accès — ${nom}`,
+      from:    process.env.SMTP_FROM,
+      to:      adminEmail,
+      replyTo: email,
+      subject: `Demande de premier accès — ${nom}`,
       html,
     });
 
-    res.json({ message: 'Votre message a été envoyé. L\'administrateur vous contactera.' });
+    res.json({ message: "Votre message a été envoyé. L'administrateur vous contactera." });
 
   } catch (error) {
     next(error);
   }
 };
 
-module.exports = { login, refreshToken, logout, getMe, forgotPassword, resetPassword, contactAdmin };
+// ════════════════════════════════════════════════
+// POST /api/auth/verify-otp
+// ════════════════════════════════════════════════
+const verifyOTP = async (req, res, next) => {
+  try {
+    const { userId, otp } = req.body;
+
+    if (!userId || !otp) {
+      return res.status(400).json({ message: 'Données manquantes.' });
+    }
+
+    const [rows] = await pool.execute(
+      `SELECT * FROM utilisateurs 
+       WHERE id_utilisateur = ? 
+         AND otp_code = ? 
+         AND otp_expiry > UTC_TIMESTAMP()
+         AND role = 'admin'`,
+      [userId, otp.trim()]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({ 
+        message: 'Code incorrect ou expiré. Vérifiez votre email ou reconnectez-vous.' 
+      });
+    }
+
+    const user = rows[0];
+
+    await pool.execute(
+      'UPDATE utilisateurs SET otp_code = NULL, otp_expiry = NULL WHERE id_utilisateur = ?',
+      [user.id_utilisateur]
+    );
+
+    const accessToken  = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    const expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+    await pool.execute(
+      'UPDATE utilisateurs SET refresh_token = ?, token_expiry = ? WHERE id_utilisateur = ?',
+      [refreshToken, expiry, user.id_utilisateur]
+    );
+
+    res.cookie('accessToken',  accessToken,  cookieOptions(2 * 60 * 60 * 1000));
+    res.cookie('refreshToken', refreshToken, cookieOptions(7 * 24 * 60 * 60 * 1000));
+
+    console.info(`[AUTH] Connexion admin OTP réussie — id: ${user.id_utilisateur} — ${new Date().toISOString()}`);
+
+    res.json({
+      message: 'Connexion réussie.',
+      user: {
+        id:        user.id_utilisateur,
+        nom:       user.nom,
+        prenom:    user.prenom,
+        email:     user.email,
+        role:      user.role,
+        info_role: null
+      }
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { login, refreshToken, logout, getMe, forgotPassword, resetPassword, contactAdmin, verifyOTP };

@@ -84,7 +84,6 @@ const StageDetail = () => {
   const [motif,      setMotif]      = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // ← Hook modal de confirmation
   const { confirm, ConfirmDialog } = useConfirm();
 
   const reload = () => stageAPI.getById(id).then(res => setStage(res.data.stage));
@@ -109,7 +108,7 @@ const StageDetail = () => {
     } finally { setSubmitting(false); }
   };
 
-  // ── Changement de statut (Démarrer / Terminer) ───────────────────────────────
+  // ── Changement de statut ─────────────────────────────────────────────────────
   const handleChangerStatut = async (nouveauStatut) => {
     const isDemarrer = nouveauStatut === 'en_cours';
 
@@ -118,7 +117,7 @@ const StageDetail = () => {
       title:        isDemarrer ? 'Démarrer le stage ?' : 'Terminer le stage ?',
       message:      isDemarrer
         ? "L'étudiant pourra commencer à déposer ses documents."
-        : 'Cette action lancera la phase d\'évaluation.',
+        : "Cette action lancera la phase d'évaluation.",
       confirmLabel: isDemarrer ? 'Démarrer' : 'Terminer',
     });
 
@@ -152,12 +151,12 @@ const StageDetail = () => {
   };
 
   // ── Téléchargement document ──────────────────────────────────────────────────
+  // ← Plus de localStorage.getItem('accessToken') → credentials: 'include' envoie le cookie
   const handleDownload = async (doc) => {
     try {
-      const token = localStorage.getItem('accessToken');
       const response = await fetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/documents/${doc.id_document}/download`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { credentials: 'include' }   // ← cookie HttpOnly envoyé automatiquement
       );
       if (!response.ok) throw new Error('Erreur téléchargement');
       const blob = await response.blob();
@@ -195,12 +194,12 @@ const StageDetail = () => {
   };
 
   // ── Export PDF ───────────────────────────────────────────────────────────────
+  // ← Même correction : credentials: 'include' à la place du header Authorization
   const handleExportPDF = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
       const response = await fetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/export/stage/${id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { credentials: 'include' }   // ← cookie HttpOnly envoyé automatiquement
       );
       const html = await response.text();
       const win  = window.open('', '_blank');
@@ -225,17 +224,15 @@ const StageDetail = () => {
   const canValider  = isEnseignantOuAdmin && stage.statut === 'en_attente';
   const canDemarrer = isEnseignantOuAdmin && stage.statut === 'valide';
   const canTerminer = isEnseignantOuAdmin && stage.statut === 'en_cours';
-  const canEvaluer = isEnseignantOuAdmin && stage.statut === 'termine';
+  const canEvaluer  = isEnseignantOuAdmin && stage.statut === 'termine';
   const canUpload   = user?.role === 'etudiant' && stage.statut === 'en_cours';
   const canDownload = true;
   const canDelete   = user?.role === 'etudiant' && stage.statut === 'en_cours';
 
   return (
     <Layout>
-      {/* ← Modal injecté ici, rendu uniquement si confirm() est en attente */}
       {ConfirmDialog}
 
-      {/* Breadcrumb */}
       <div className="breadcrumb">
         <Link to="/stages">Stages</Link>
         <ChevronRight size={14} />
@@ -285,14 +282,14 @@ const StageDetail = () => {
             </button>
           )}
 
-        {canEvaluer && (
-          <Link to={`/stages/${id}/evaluer`} className="btn-evaluer">
-            <span className="btn-evaluer-inner">
-              <Star size={15} fill="currentColor" />
-              Évaluer le stage
-            </span>
-          </Link>
-        )}
+          {canEvaluer && (
+            <Link to={`/stages/${id}/evaluer`} className="btn-evaluer">
+              <span className="btn-evaluer-inner">
+                <Star size={15} fill="currentColor" />
+                Évaluer le stage
+              </span>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -396,8 +393,8 @@ const StageDetail = () => {
                   {stage.tuteur_prenom || '—'} {stage.tuteur_nom || ''}
                 </p>
                 {stage.tuteur_telephone && <p className="sd-info-sub">{stage.tuteur_telephone}</p>}
-                {stage.tuteur_email && <p className="sd-info-sub">{stage.tuteur_email}</p>}
-                {stage.tuteur_poste && <p className="sd-info-sub">{stage.tuteur_poste}</p>}
+                {stage.tuteur_email     && <p className="sd-info-sub">{stage.tuteur_email}</p>}
+                {stage.tuteur_poste     && <p className="sd-info-sub">{stage.tuteur_poste}</p>}
               </div>
             </div>
           </InfoBlock>
@@ -410,70 +407,69 @@ const StageDetail = () => {
           )}
 
           {['en_cours', 'termine', 'evalue'].includes(stage.statut) && (
-          <InfoBlock title={`Rapport de stage pour la notation de l'enseignant (${stage.documents?.length || 0})`}>
-            {user?.role === 'etudiant' && stage.statut === 'valide' && (
-              <div className="alert alert-info" style={{ marginBottom: 12 }}>
-                <Clock size={14} />
-                <span>
-                  Le stage doit être <strong>démarré par votre enseignant</strong> avant
-                  que vous puissiez déposer des documents.
-                </span>
-              </div>
-            )}
+            <InfoBlock title={`Rapport de stage pour la notation de l'enseignant (${stage.documents?.length || 0})`}>
+              {user?.role === 'etudiant' && stage.statut === 'valide' && (
+                <div className="alert alert-info" style={{ marginBottom: 12 }}>
+                  <Clock size={14} />
+                  <span>
+                    Le stage doit être <strong>démarré par votre enseignant</strong> avant
+                    que vous puissiez déposer des documents.
+                  </span>
+                </div>
+              )}
 
-            {canUpload && (
-              <label className="sd-upload-btn">
-                <Upload size={14} /> Déposer un document
-                <input
-                  type="file"
-                  hidden
-                  accept=".pdf,.docx,.doc,.zip"
-                  onChange={handleUpload}
-                />
-              </label>
-            )}
+              {canUpload && (
+                <label className="sd-upload-btn">
+                  <Upload size={14} /> Déposer un document
+                  <input
+                    type="file"
+                    hidden
+                    accept=".pdf,.docx,.doc,.zip"
+                    onChange={handleUpload}
+                  />
+                </label>
+              )}
 
-            {!stage.documents?.length ? (
-              <p className="sd-info-sub" style={{ marginTop: canUpload ? 12 : 0 }}>
-                Aucun document déposé.
-              </p>
-            ) : (
-              <div className="sd-docs-list">
-                {stage.documents.map(doc => (
-                  <div key={doc.id_document} className="sd-doc-item">
-                    <FileText size={16} className="sd-doc-icon" />
-                    <div className="sd-doc-info">
-                      <span className="sd-doc-name">{doc.nom_original}</span>
-                      <span className="sd-doc-meta">
-                        {doc.type_document} · {(doc.taille_octets / 1024).toFixed(0)} Ko · {fmt(doc.date_depot)}
-                      </span>
+              {!stage.documents?.length ? (
+                <p className="sd-info-sub" style={{ marginTop: canUpload ? 12 : 0 }}>
+                  Aucun document déposé.
+                </p>
+              ) : (
+                <div className="sd-docs-list">
+                  {stage.documents.map(doc => (
+                    <div key={doc.id_document} className="sd-doc-item">
+                      <FileText size={16} className="sd-doc-icon" />
+                      <div className="sd-doc-info">
+                        <span className="sd-doc-name">{doc.nom_original}</span>
+                        <span className="sd-doc-meta">
+                          {doc.type_document} · {(doc.taille_octets / 1024).toFixed(0)} Ko · {fmt(doc.date_depot)}
+                        </span>
+                      </div>
+                      <div className="sd-doc-actions">
+                        {canDownload && (
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            title="Télécharger"
+                            onClick={() => handleDownload(doc)}
+                          >
+                            <Download size={14} />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            className="btn btn-ghost btn-sm btn-danger-ghost"
+                            title="Supprimer"
+                            onClick={() => handleDeleteDoc(doc.id_document, doc.nom_original)}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div className="sd-doc-actions">
-                      {canDownload && (
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          title="Télécharger"
-                          onClick={() => handleDownload(doc)}
-                        >
-                          <Download size={14} />
-                        </button>
-                      )}
-                      {canDelete && (
-                        <button
-                          className="btn btn-ghost btn-sm btn-danger-ghost"
-                          title="Supprimer"
-                          // ← on passe le nom du fichier pour l'afficher dans le modal
-                          onClick={() => handleDeleteDoc(doc.id_document, doc.nom_original)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </InfoBlock>
+                  ))}
+                </div>
+              )}
+            </InfoBlock>
           )}
         </div>
 
