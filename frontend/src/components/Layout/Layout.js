@@ -3,6 +3,8 @@ import Navbar  from './Navbar';
 import Sidebar from './Sidebar';
 import './Layout.css';
 
+// ── Le localStorage ici ne stocke QUE la préférence de thème (pas de token) ──
+// C'est une donnée non sensible → localStorage est parfaitement adapté ici.
 const Layout = ({ children }) => {
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('darkMode') === 'true';

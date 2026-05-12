@@ -1,11 +1,13 @@
 require('dotenv').config();
-const express = require('express');
-const cors    = require('cors');
-const path    = require('path');
-const helmet  = require('helmet');
+const express      = require('express');
+const cors         = require('cors');
+const path         = require('path');
+const helmet       = require('helmet');
+const cookieParser = require('cookie-parser');
+const morgan       = require('morgan'); // ← AJOUTÉ
 
 const { testConnection } = require('./config/database');
-const { testMailer } = require('./config/mailer');
+const { testMailer }     = require('./config/mailer');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const { generalLimiter } = require('./middleware/rateLimiter');
 
@@ -16,24 +18,31 @@ const userRoutes         = require('./routes/users');
 const notificationRoutes = require('./routes/notifications');
 const evaluationRoutes   = require('./routes/evaluations');
 const exportRoutes       = require('./routes/export');
-const documentsRoutes    = require('./routes/documents'); // ← déplacé ici
+const documentsRoutes    = require('./routes/documents');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
+
+// ─── Logs HTTP ← AJOUTÉ ───
+// 'combined' en prod (logs complets), 'dev' en développement (logs colorés courts)
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // ─── Security ───
 app.use(helmet());
 
 // ─── CORS ───
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin:      process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+  methods:     ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
 
 // ─── Body parsers ───
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// ─── Cookie parser ───
+app.use(cookieParser());
 
 // ─── Rate limiter global ───
 app.use(generalLimiter);
@@ -48,15 +57,15 @@ app.use('/api/users',         userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/evaluations',   evaluationRoutes);
 app.use('/api/export',        exportRoutes);
-app.use('/api/documents',     documentsRoutes); // ← monté ici, après app = express()
+app.use('/api/documents',     documentsRoutes);
 app.use('/api/entreprises',   require('./routes/entreprises'));
 
 // ─── Health check ───
 app.get('/api/health', (req, res) => {
   res.json({
-    status: 'OK',
-    message: '🎓 API Suivi des Stages opérationnelle',
-    timestamp: new Date().toISOString()
+    status:    'OK',
+    message:   '🎓 API Suivi des Stages opérationnelle',
+    timestamp: new Date().toISOString(),
   });
 });
 

@@ -9,7 +9,8 @@ const {
   getMe,
   forgotPassword,
   resetPassword,
-  contactAdmin
+  contactAdmin,
+  verifyOTP
 } = require('../controllers/authController');
 
 const { authenticate } = require('../middleware/auth');
@@ -47,5 +48,7 @@ router.post('/forgot-password', resetLimiter, forgotPassword);
 router.post('/reset-password', resetPassword);
 
 router.post('/contact-admin', contactAdmin);
+
+router.post('/verify-otp', verifyOTP);
 
 module.exports = router;

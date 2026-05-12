@@ -2,41 +2,40 @@ import axios from 'axios';
 
 // ── Instance axios configurée ──
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
-  headers: { 'Content-Type': 'application/json' },
+  baseURL:         'http://localhost:5000/api',
+  headers:         { 'Content-Type': 'application/json' },
+  withCredentials: true,
 });
 
-// ── Intercepteur requête : ajoute le token JWT automatiquement ──
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+// ── Routes pour lesquelles on ne tente PAS de refresh ──
+const NO_REFRESH_URLS = ['/auth/me', '/auth/refresh', '/auth/login'];
 
-// ── Intercepteur réponse : gère l'expiration du token ──
+// ── Intercepteur RÉPONSE ──
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
 
-    if (error.response?.status === 401 && !original._retry) {
+    // Ne pas tenter de refresh si :
+    // - Ce n'est pas un 401
+    // - On est déjà en train de retry
+    // - La requête concerne une route auth (évite la boucle infinie)
+    const isAuthRoute = NO_REFRESH_URLS.some(url => original.url?.includes(url));
+
+    if (error.response?.status === 401 && !original._retry && !isAuthRoute) {
       original._retry = true;
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) throw new Error('Pas de refresh token');
-
-        const { data } = await axios.post(
+        await axios.post(
           'http://localhost:5000/api/auth/refresh',
-          { refreshToken }
+          {},
+          { withCredentials: true }
         );
-
-        localStorage.setItem('accessToken', data.accessToken);
-        original.headers.Authorization = `Bearer ${data.accessToken}`;
         return api(original);
-
       } catch {
-        localStorage.clear();
-        window.location.href = '/login';
+        // Refresh échoué → redirige vers login seulement si pas déjà sur /login
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
       }
     }
 
@@ -51,10 +50,11 @@ export const authAPI = {
   login:          (data)  => api.post('/auth/login', data),
   logout:         ()      => api.post('/auth/logout'),
   getMe:          ()      => api.get('/auth/me'),
-  refresh:        (token) => api.post('/auth/refresh', { refreshToken: token }),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   resetPassword:  (data)  => api.post('/auth/reset-password', data),
   contactAdmin:   (data)  => api.post('/auth/contact-admin', data),
+
+  verifyOTP: (data) => api.post('/auth/verify-otp', data),
 };
 
 // ════════════════════════════════════════════════
@@ -66,7 +66,7 @@ export const stageAPI = {
   create:        (data)     => api.post('/stages', data),
   update:        (id, data) => api.put(`/stages/${id}`, data),
   valider:       (id, data) => api.put(`/stages/${id}/valider`, data),
-  changerStatut: (id, data) => api.put(`/stages/${id}/statut`, data), // ← nouveau
+  changerStatut: (id, data) => api.put(`/stages/${id}/statut`, data),
   getStats:      ()         => api.get('/stages/stats'),
 };
 
