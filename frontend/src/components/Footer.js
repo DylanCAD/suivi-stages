@@ -100,18 +100,31 @@ const Footer = () => {
 
       {/* Modal */}
       {modalOpen && (
-        <div className="footer-modal-overlay" onClick={() => setModalOpen(null)}>
-          <div className="footer-modal" onClick={e => e.stopPropagation()}>
-            <div className="footer-modal-header">
-              <h2>{modals[modalOpen].titre}</h2>
-              <button className="footer-modal-close" onClick={() => setModalOpen(null)} aria-label="Fermer">✕</button>
-            </div>
-            <div className="footer-modal-body">
-              {modals[modalOpen].contenu}
-            </div>
+      <div
+        className="footer-modal-overlay"
+        onClick={() => setModalOpen(null)}
+        onKeyDown={(e) => e.key === 'Escape' && setModalOpen(null)}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-titre"
+        tabIndex={-1}
+      >
+        <div
+          className="footer-modal"
+          onClick={e => e.stopPropagation()}
+          onKeyDown={e => e.stopPropagation()}
+          role="document"
+        >
+          <div className="footer-modal-header">
+            <h2 id="modal-titre">{modals[modalOpen].titre}</h2>
+            <button className="footer-modal-close" onClick={() => setModalOpen(null)} aria-label="Fermer">✕</button>
+          </div>
+          <div className="footer-modal-body">
+            {modals[modalOpen].contenu}
           </div>
         </div>
-      )}
+      </div>
+    )}
     </>
   );
 };
