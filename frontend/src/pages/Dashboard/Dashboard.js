@@ -127,7 +127,7 @@ const Dashboard = () => {
           <p className="page-subtitle">
             {user?.role === 'etudiant'   && 'Voici un résumé de vos stages'}
             {user?.role === 'enseignant' && 'Tableau de bord de votre portefeuille étudiants'}
-            {user?.role === 'admin'      && 'Vue globale — Année scolaire en cours'}
+            {user?.role === 'admin'      && 'Vue globale de l\'année scolaire en cours'}
             {user?.role === 'tuteur'     && 'Vos stagiaires en cours'}
           </p>
         </div>

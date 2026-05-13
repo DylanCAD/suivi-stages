@@ -1,0 +1,195 @@
+/* ══════════════════════════════════════════
+   FOOTER — StageTrack
+══════════════════════════════════════════ */
+.footer {
+  background: var(--nav);
+  border-top: 2px solid var(--accent);
+  padding: 32px 40px 0;
+  margin-top: auto;
+}
+
+.footer-inner {
+  display: flex;
+  gap: 48px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  padding-bottom: 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ── Marque ── */
+.footer-brand {
+  flex: 1;
+  min-width: 180px;
+}
+
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono, monospace);
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.footer-tagline {
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Colonnes ── */
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 140px;
+}
+
+.footer-col-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.footer-link {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  text-decoration: none;
+  padding: 2px 0;
+  transition: color 0.15s;
+  width: fit-content;
+}
+
+.footer-link:hover {
+  color: white;
+}
+
+.footer-link-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+/* ── Barre basse ── */
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 0;
+  font-size: 0.72rem;
+  color: #475569;
+  flex-wrap: wrap;
+}
+
+.footer-sep {
+  opacity: 0.4;
+}
+
+/* ── Modal légal ── */
+.footer-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.footer-modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.footer-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+}
+
+.footer-modal-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text, #0f172a);
+  margin: 0;
+}
+
+.footer-modal-close {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.footer-modal-close:hover {
+  background: #f1f5f9;
+  color: var(--text, #0f172a);
+}
+
+.footer-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.footer-modal-body p {
+  font-size: 0.84rem;
+  color: #475569;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.footer-modal-body strong {
+  color: var(--text, #0f172a);
+  font-weight: 600;
+}
+
+/* ── Dark mode ── */
+body.dark .footer-tagline { color: #475569; }
+body.dark .footer-modal { background: #1e293b; }
+body.dark .footer-modal-header { border-color: #334155; }
+body.dark .footer-modal-header h2 { color: #f1f5f9; }
+body.dark .footer-modal-body p { color: #94a3b8; }
+body.dark .footer-modal-body strong { color: #e2e8f0; }
+body.dark .footer-modal-close:hover { background: #334155; color: #f1f5f9; }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .footer { padding: 24px 20px 0; }
+  .footer-inner { gap: 24px; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; gap: 4px; }
+}
+
+.footer-logo-img {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 7px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}

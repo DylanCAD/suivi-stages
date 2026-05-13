@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../services/api';
 import './Login.css';
+import logo from '../../assets/logo2.png';
 
 const VerifyOTP = () => {
   const navigate  = useNavigate();
@@ -85,15 +86,9 @@ const VerifyOTP = () => {
       <div className="login-circle login-circle-1"></div>
       <div className="login-circle login-circle-2"></div>
 
-      <div className="login-card">
+        <div className="login-card">
         <div className="login-logo">
-          <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="#2563eb"/>
-            <path d="M8 22 L16 10 L24 22" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-            <path d="M11 18 L21 18" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-            <circle cx="16" cy="10" r="2" fill="white"/>
-          </svg>
-          <span className="login-logo-text">StageTrack</span>
+            <img src={logo} alt="Logo" className="login-logo-img" />
         </div>
 
         <h2 style={{ textAlign: 'center', fontSize: '1rem', marginBottom: 6, fontFamily: 'var(--mono)' }}>
