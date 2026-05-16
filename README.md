@@ -167,3 +167,15 @@ git push origin feat/modifications1
 7. Reviens sur main en local :
 git checkout main
 git pull origin main
+
+Pour lancer l'app :
+docker compose up
+
+Pour l'arrêter :
+docker compose down
+
+Pour rebuilder après une modification de code :
+docker compose up --build
+
+Il se lance sur :
+http://localhost:3000/login
