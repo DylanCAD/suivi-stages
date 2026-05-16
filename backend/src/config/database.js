@@ -1,5 +1,5 @@
-const mysql = require('mysql2/promise');
 require('dotenv').config();
+const mysql = require('mysql2/promise');
 
 // Crée un "pool" de connexions MySQL
 // Un pool = plusieurs connexions disponibles en même temps
