@@ -4,7 +4,7 @@ const cors         = require('cors');
 const path         = require('path');
 const helmet       = require('helmet');
 const cookieParser = require('cookie-parser');
-const morgan       = require('morgan'); // ← AJOUTÉ
+const morgan       = require('morgan');
 
 const { testConnection } = require('./config/database');
 const { testMailer }     = require('./config/mailer');
