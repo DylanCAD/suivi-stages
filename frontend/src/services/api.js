@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // ── Instance axios configurée ──
 const api = axios.create({
-  baseURL:         'http://localhost:5000/api',
+  baseURL: process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : 'http://localhost:5000/api',
   headers:         { 'Content-Type': 'application/json' },
   withCredentials: true,
 });
@@ -26,7 +26,7 @@ api.interceptors.response.use(
       original._retry = true;
       try {
         await axios.post(
-          'http://localhost:5000/api/auth/refresh',
+              `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/auth/refresh`,
           {},
           { withCredentials: true }
         );
