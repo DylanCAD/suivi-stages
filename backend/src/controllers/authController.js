@@ -6,8 +6,8 @@ const { validationResult } = require('express-validator');
 // ─── Options cookies communes ───
 const cookieOptions = (maxAge) => ({
   httpOnly: true,
-  secure:   process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  secure:   false,
+  sameSite: 'lax',
   maxAge,
 });
 
@@ -171,8 +171,8 @@ const logout = async (req, res, next) => {
       [req.user.id_utilisateur]
     );
 
-    res.clearCookie('accessToken',  { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' });
-    res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' });
+    res.clearCookie('accessToken',  { httpOnly: true, sameSite: 'lax', secure: false });
+    res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'lax', secure: false });
 
     console.info(`[AUTH] Déconnexion : ${req.user.email} — ${new Date().toISOString()}`);
 
